@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <script src="index.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <header>
+        <h1>Affiliagram</h1>
+        <div class="bouton-container">
+            <button class="bouton-normal">S'inscrire</button>
+            <button class="bouton-normal">Se connecter</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div>
+            <form action="recherche-site.php">
+                <h2>Profitez des avantages de l’application ou du site de votre choix</h2>
+                <input type="text" placeholder="Nom de l'application ou du site">
+                <button type="submit" class="bouton-normal">Voir les codes de parrainage</button>
+            </form>
+
+            <form action="partager-code.php">
+                <h2>Partagez vos codes ou liens d’affiliations</h2>
+                <input type="text" placeholder="Nom de l'application ou du site">
+                
+                <div class="type-parrainage">
+                    <input type="radio" name="type-parrainage" value="lien" id="lien" checked/>
+                    <label for="lien">
+                        lien
+                    </label>
+                  
+                    <input type="radio" name="type-parrainage" value="code" id="code" />
+                    <label for="code">
+                        code
+                    </label>
+                  </div>
+
+                <input type="text" id="parrainage-input" placeholder="Code ou lien d'affiliation">
+                <button type="submit" class="bouton-normal">Partager</button>
+            </form>
+            
+        </div>
+
+        <div>
+            <div class="pub">PUB</div>
+        </div>  
+    </div>
+</body>
+</html>
