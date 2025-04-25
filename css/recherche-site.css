@@ -1,0 +1,118 @@
+body{
+    margin: 0;
+    padding: 0;
+}
+
+header{
+    padding: 2%;
+
+    background-color: #F2CA96;
+    color: black;
+
+    display: flex;
+    align-items: center;
+}
+
+.lien-compte{
+    margin-left: auto;
+}
+
+.lien-compte img{
+    width: 75px;
+    height: 75px;
+}
+
+#main-container{
+    display: flex;
+    align-items: center;
+
+    flex-direction: column;
+    padding: 2%;
+}
+
+.pub{
+    width: 728px;
+    height: 90px;
+
+    background-color: black;
+    color: white;
+
+    align-self: center;
+}
+
+.input-recherche{
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+
+    margin: 5% 0 5% 0;
+}
+
+.input-recherche input{
+    color: black;
+    background-color: #D9D9D9;
+
+    border: #b5b5b5;
+    border-radius: 5px;
+    padding: 1.5%;
+    
+}
+
+hr{
+    width: 90%;
+}
+
+#liste-sites {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 80%;
+    justify-items: center;
+  }
+  
+  #liste-sites li {
+    display: flex;
+    justify-content: center; /* centre horizontalement la carte */
+    align-items: center;     /* centre verticalement la carte */
+  }
+  
+  .affichage-site {
+    box-sizing: border-box;  /* inclut padding et border dans la width */
+    flex: 0 0 auto;          /* flex-shrink:0; flex-basis:auto; */
+    width: 220px;            /* + facile à piloter qu’un % */
+    padding: 1rem;           /* ou padding: 16px; selon vos goûts */
+    border: 1px solid #000;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1rem;        /* je réduis à 1rem pour rester cohérent */
+  }
+  
+
+.affichage-site img{
+    width: 150px;
+}
+
+.affichage-site strong{
+    margin: 10% 0 10% 0;
+}
+
+.affichage-site p{
+    margin: 0;
+}
+
+button{
+    margin-top: 10%;
+    padding: 12px 28px;      /* hauteur / largeur des boutons */
+    border: 1px solid #000;
+    font-weight: 600;        /* semi-bold */
+    text-decoration: none;
+    border-radius: 999px;     /* forme pill */
+    cursor: pointer;
+    transition: background-color .2s ease, color .2s ease;
+    width: 80%;
+  }
