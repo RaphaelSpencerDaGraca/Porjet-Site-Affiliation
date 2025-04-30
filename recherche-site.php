@@ -64,7 +64,7 @@ $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <p>Bonus jusqu’à <span><?= htmlspecialchars($brand['bonus']) ?></span> €</p>
 
             <button
-              onclick="window.location.href='avantages-site.php?id=<?= $brand['id'] ?>';"
+              onclick="window.location.href='avantages-site.php?name=<?= $brand['name'] ?>';"
             >
               Je le veux !
             </button>
