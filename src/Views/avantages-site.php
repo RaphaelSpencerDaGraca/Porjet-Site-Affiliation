@@ -35,7 +35,8 @@
 
                 <div class="info-parrainage">
                     <strong><?= htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                    <p>liens disponibles : <span><?= (int)$brand['bonus'] ?></span></p>
+                    <p>Liens disponibles : <span><?= count($links) ?></span></p>
+                    <p>Codes disponibles : <span><?= count($codes) ?></span></p>
                     <strong>Avantages filleul</strong>
                     <p><?= nl2br(htmlspecialchars($brand['description'], ENT_QUOTES, 'UTF-8')) ?></p>
                     <?php if (!empty($brand['website_url'])): ?>
@@ -69,32 +70,42 @@
         <hr class="barre">
 
         <ul id="liste-liens">
-            <li>
-                <img src="../img/account.png" alt="">
-                <div>
-                    <div class="specs-user">
-                        <strong>`pseudo`</strong>
-                        <strong>`score`/5</strong>
-                    </div>
-                    <br>
-                    <button>Vers le site!</button>
-                </div>
-            </li>
-        </ul>
+      <?php if (!empty($links)): ?>
+        <?php foreach ($links as $link): ?>
+          <li>
+            <img src="../img/account.png" alt="">
+            <div>
+              <div class="specs-user">
+                <strong><?= htmlspecialchars($link['pseudo'], ENT_QUOTES) ?></strong>
+              </div>
+              <button onclick="window.open('<?= htmlspecialchars($link['custom_link'], ENT_QUOTES) ?>','_blank')">
+                Vers le site
+              </button>
+            </div>
+          </li>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <li>Aucun lien disponible.</li>
+      <?php endif; ?>
+    </ul>
 
-        <ul id="liste-codes">
-            <li>
-                <img src="../img/account.png" alt="">
-                <div>
-                    <div class="specs-user">
-                        <strong>`pseudo`</strong>
-                        <strong>`score`/5</strong>
-                    </div>
-                    <br>
-                    <p class="espace-code">`Code`</p>
-                </div>
-            </li>
-        </ul>
+    <ul id="liste-codes" style="display:none;">
+      <?php if (!empty($codes)): ?>
+        <?php foreach ($codes as $code): ?>
+          <li>
+            <img src="../img/account.png" alt="">
+            <div>
+              <div class="specs-user">
+                <strong><?= htmlspecialchars($code['pseudo'], ENT_QUOTES) ?></strong>
+              </div>
+              <p class="espace-code"><?= htmlspecialchars($code['code'], ENT_QUOTES) ?></p>
+            </div>
+          </li>
+        <?php endforeach; ?>
+      <?php else: ?>
+        <li>Aucun code disponible.</li>
+      <?php endif; ?>
+    </ul>
     </div>
 </body>
 </html>

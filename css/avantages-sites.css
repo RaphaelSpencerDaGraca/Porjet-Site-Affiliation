@@ -109,6 +109,7 @@ li{
     border-radius: 5px;
     align-items: center;
     padding: 2%;
+    margin-bottom: 5%;
 }
 
 li img{
@@ -138,13 +139,13 @@ button{
     border-radius: 999px;     /* forme pill */
     cursor: pointer;
     transition: background-color .2s ease, color .2s ease;
-    width: 80%;
+    width: 40%;
   }
 
   .espace-code{
     border: 1px solid #000;
     border-radius: 5px;
-    width: 80%;
+    width: 40%;
     padding: 2%;
     text-align: center;
     cursor: pointer;

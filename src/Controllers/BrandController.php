@@ -319,8 +319,11 @@ class BrandController
         $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
         $brand = $this->brandModel->findByName($name);
+        $links = $this->brandModel->findLinksByBrandId((int)$brand['id']);
+        $codes = $this->brandModel->findCodesByBrandId((int)$brand['id']);
 
         // on inclut la vue, qui utilisera $brand
         include __DIR__ . '/../Views/avantages-site.php';
     }
+    
 }

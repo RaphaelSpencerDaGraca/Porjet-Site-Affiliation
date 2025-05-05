@@ -66,4 +66,37 @@ class BrandModel extends BaseModel {
 
         return $stmt->execute($params);
     }
+
+    public function findLinksByBrandId(int $brandId): array
+    {
+        $sql = "
+          SELECT u.pseudo, al.custom_link
+          FROM affiliate_links al
+          JOIN users u ON al.user_id = u.id
+          WHERE al.brand_id = :brandId
+            AND al.custom_link IS NOT NULL
+            AND al.custom_link <> ''
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupère tous les codes de parrainage d'une marque
+     */
+    public function findCodesByBrandId(int $brandId): array
+    {
+        $sql = "
+          SELECT u.pseudo, al.code 
+          FROM affiliate_links al 
+          JOIN users u ON al.user_id = u.id 
+          WHERE al.brand_id = :brandId
+        ";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
