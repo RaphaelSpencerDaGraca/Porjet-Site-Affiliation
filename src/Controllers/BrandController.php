@@ -308,4 +308,19 @@ class BrandController
             unlink($path);
         }
     }
+
+    /**
+ * Affiche les infos d'une marque par son nom (pour l'URL ?action=showByName&name=...)
+ */
+    public function showByName()
+    {
+        $name = $_GET['name'] ?? '';
+        // sécurisation minimale
+        $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
+        $brand = $this->brandModel->findByName($name);
+
+        // on inclut la vue, qui utilisera $brand
+        include __DIR__ . '/../Views/avantages-site.php';
+    }
 }
