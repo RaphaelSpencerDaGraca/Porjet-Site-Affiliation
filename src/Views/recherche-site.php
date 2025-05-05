@@ -1,5 +1,5 @@
 <?php
-require_once 'dbconnect.php';
+require_once '../../dbconnect.php';
 
 $stmt = $pdo->query("
   SELECT 
@@ -25,15 +25,15 @@ $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="js/recherche-site.js" type="module"></script>
-  <link rel="stylesheet" href="css/recherche-site.css">
+  <script src="../js/recherche-site.js" type="module"></script>
+  <link rel="stylesheet" href="../css/recherche-site.css">
   <title>Affiliagram</title>
 </head>
 <body>
   <header>
     <h1>Affiliagram</h1>
     <div class="lien-compte">
-      <img src="img/account.png" alt="">
+      <img src="../img/account.png" alt="">
     </div>
   </header>
 

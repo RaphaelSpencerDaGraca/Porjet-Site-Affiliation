@@ -1,22 +1,24 @@
-<?php
-
-?>
-
+<?php /** @var array|false $brand */ ?>
 
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="css/avantages-sites.css">
-    <script src="js/avantages-site.js"></script>
-    <title>Document</title>
+    <title>
+        <?= $brand
+            ? 'Avantages de ' . htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8')
+            : 'Marque introuvable'
+        ?>
+    </title>
+    <link rel="stylesheet" href="../css/avantages-sites.css">
+    <script defer src="../js/avantages-site.js"></script>
 </head>
 <body>
     <header>
         <h1>Affiliagram</h1>
         <div class="lien-compte">
-            <img src="img/account.png" alt="">
+            <img src="../img/account.png" alt="Compte utilisateur">
         </div>
     </header>
 
@@ -26,14 +28,36 @@
         <a href="javascript:history.back()" class="bouton-retour">← Retour</a>
 
         <div id="affichage-site">
-            <img src="img/Vector.png" alt="logo du site">
+            <?php if ($brand): ?>
+                <img
+                    src="<?= htmlspecialchars($brand['logo_url'], ENT_QUOTES, 'UTF-8') ?>"
+                    alt="Logo <?= htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8') ?>">
 
-            <div class="info-parrainage">
-                <strong>`Nom du site`</strong>
-                <p>liens disponibles: <span>`20`</span></p>
-                <strong>Avantages filleul</strong>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere voluptas sed beatae commodi in autem illo vero assumenda nesciunt tempora, magnam tempore aperiam saepe animi consectetur officiis. Nulla, maiores quas. </p>
-            </div>
+                <div class="info-parrainage">
+                    <strong><?= htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                    <p>liens disponibles : <span><?= (int)$brand['bonus'] ?></span></p>
+                    <strong>Avantages filleul</strong>
+                    <p><?= nl2br(htmlspecialchars($brand['description'], ENT_QUOTES, 'UTF-8')) ?></p>
+                    <?php if (!empty($brand['website_url'])): ?>
+                        <p>
+                            <a
+                                href="<?= htmlspecialchars($brand['website_url'], ENT_QUOTES, 'UTF-8') ?>"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                Visiter le site
+                            </a>
+                        </p>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <div class="info-parrainage">
+                    <p class="error">
+                        Aucune marque trouvée pour
+                        « <?= htmlspecialchars($_GET['name'] ?? '', ENT_QUOTES, 'UTF-8') ?> ».
+                    </p>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div class="choix-lien-code">
@@ -46,7 +70,7 @@
 
         <ul id="liste-liens">
             <li>
-                <img src="img/account.png" alt="">
+                <img src="../img/account.png" alt="">
                 <div>
                     <div class="specs-user">
                         <strong>`pseudo`</strong>
@@ -60,7 +84,7 @@
 
         <ul id="liste-codes">
             <li>
-                <img src="img/account.png" alt="">
+                <img src="../img/account.png" alt="">
                 <div>
                     <div class="specs-user">
                         <strong>`pseudo`</strong>
@@ -71,7 +95,6 @@
                 </div>
             </li>
         </ul>
-
     </div>
 </body>
 </html>
