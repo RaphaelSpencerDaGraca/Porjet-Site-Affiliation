@@ -329,7 +329,7 @@ class BrandController
     public function searchSite()
     {
         $brands = $this->brandModel->findActive();
-        
+
         // on inclut la vue, qui utilisera $brand
         include __DIR__ . '/../Views/recherche-site.php';
     }
