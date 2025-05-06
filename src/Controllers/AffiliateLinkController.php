@@ -52,7 +52,7 @@ class AffiliateLinkController {
         $userId = $_SESSION['user']['id'];
         $links = $this->affiliateLinkModel->findByUserId($userId);
 
-        include 'views/'.$this->affiliateLinkScript
+        include 'views/'.$this->affiliateLinkScript;
     }
 
     /**
@@ -174,7 +174,7 @@ class AffiliateLinkController {
 
         $brand = $this->brandModel->findById($link['brand_id']);
 
-        include 'views/'.$this->affiliateLinkScript
+        include 'views/'.$this->affiliateLinkScript;
     }
 
     /**

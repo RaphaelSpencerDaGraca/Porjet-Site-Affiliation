@@ -1,25 +1,7 @@
 <?php
-require_once '../../dbconnect.php';
 
-$stmt = $pdo->query("
-  SELECT 
-    b.id,
-    b.name,
-    b.bonus,
-    b.logo_url,
-    b.website_url,
-    COUNT(al.id) AS link_count
-  FROM brands AS b
-  LEFT JOIN affiliate_links AS al
-    ON al.brand_id   = b.id
-   AND al.is_active = 1
-  WHERE b.is_active = 1
-  GROUP BY b.id
-  ORDER BY COUNT(al.id) DESC
-");
-$brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  
 ?>
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -61,10 +43,11 @@ $brands = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <strong><?= htmlspecialchars($brand['name']) ?></strong>
 
             <p>Liens disponibles: <span><?= htmlspecialchars($brand['link_count']) ?></span></p>
+            <p>Codes disponibles: <span><?= htmlspecialchars($brand['code_count']) ?></span></p>
             <p>Bonus jusqu’à <span><?= htmlspecialchars($brand['bonus']) ?></span> €</p>
 
             <button
-              onclick="window.location.href='avantages-site.php?name=<?= $brand['name'] ?>';"
+              onclick="window.location.href='index.php?controller=brand&action=showByName&name=<?= $brand['name'] ?>';"
             >
               Je le veux !
             </button>

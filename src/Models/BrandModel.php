@@ -7,12 +7,29 @@ class BrandModel extends BaseModel {
     /**
      * Trouve les marques actives
      */
-    public function findActive() {
-        $query = "SELECT * FROM brands WHERE is_active = 1 ORDER BY name ASC";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    public function findActive(): array
+{
+    $sql = "
+      SELECT
+        b.*,
+        -- Compte les lignes où custom_link n'est pas NULL ni vide
+        SUM(CASE WHEN al.custom_link IS NOT NULL AND al.custom_link <> '' THEN 1 ELSE 0 END) AS link_count,
+        -- Compte les lignes où code n'est pas NULL ni vide
+        SUM(CASE WHEN al.code IS NOT NULL AND al.code <> '' THEN 1 ELSE 0 END)         AS code_count
+      FROM brands b
+      LEFT JOIN affiliate_links al 
+        ON al.brand_id = b.id
+      WHERE b.is_active = 1
+      GROUP BY b.id
+      HAVING link_count > 0 OR code_count > 0
+      ORDER BY b.name ASC
+    ";
+
+    $stmt = $this->db->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 
     /**
      * Trouve une marque par son nom

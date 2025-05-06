@@ -35,8 +35,10 @@
 
                 <div class="info-parrainage">
                     <strong><?= htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                    <p>Liens disponibles : <span><?= count($links) ?></span></p>
-                    <p>Codes disponibles : <span><?= count($codes) ?></span></p>
+                    <p>Liens disponibles: <span><?= count($links) ?></span>
+                        <br>
+                       Codes disponibles: <span><?= count($codes) ?></span>
+                    </p>    
                     <strong>Avantages filleul</strong>
                     <p><?= nl2br(htmlspecialchars($brand['description'], ENT_QUOTES, 'UTF-8')) ?></p>
                     <?php if (!empty($brand['website_url'])): ?>
