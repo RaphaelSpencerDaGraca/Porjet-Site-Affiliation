@@ -11,6 +11,7 @@ require_once __DIR__ . '/../src/Core/dbconnect.php';    // définit $db (PDO ins
 require_once __DIR__ . '/../src/Models/BaseModel.php';
 require_once __DIR__ . '/../src/Models/BrandModel.php';
 require_once __DIR__ . '/../src/Models/UserModel.php';
+require_once __DIR__ . '/../src/Models/AffiliateLinkModel.php';
 require_once __DIR__ . '/../src/Controllers/BrandController.php';
 require_once __DIR__ . '/../src/Controllers/UserController.php';
 require_once __DIR__ . '/../src/Controllers/AuthController.php';
@@ -18,8 +19,9 @@ require_once __DIR__ . '/../src/Controllers/AuthController.php';
 // 3) Instancier les modèles et les contrôleurs
 $brandModel      = new BrandModel($pdo);
 $userModel       = new UserModel($pdo);
+$affiliateLinkModel = new AffiliateLinkModel($pdo);
 $brandController = new BrandController($brandModel);
-$userController  = new UserController($userModel);
+$userController  = new UserController($userModel, $affiliateLinkModel, $brandModel);
 $authController  = new AuthController($userModel);
 
 // 4) Lire les paramètres de routing
