@@ -1,224 +1,250 @@
 <?php
-
 /**
- * Contrôleur pour la gestion des utilisateurs
+ * Contrôleur pour la gestion du profil utilisateur
  */
-class UserController
-{
+class UserController {
     private $userModel;
+    private $affiliateLinkModel;
+    private $brandModel;
 
     /**
-     * Constructeur - initialise le modèle
+     * Constructeur - initialise les modèles
      */
-    public function __construct($userModel)
-    {
+    public function __construct($userModel, $affiliateLinkModel, $brandModel) {
         $this->userModel = $userModel;
+        $this->affiliateLinkModel = $affiliateLinkModel;
+        $this->brandModel = $brandModel;
     }
 
     /**
-     * Affiche la liste des utilisateurs
+     * Vérifie si l'utilisateur est connecté
      */
-    public function index()
-    {
-        $users = $this->userModel->findAll();
-        include 'views/users/index.php';
-    }
-
-    /**
-     * Affiche les détails d'un utilisateur
-     */
-    public function show($id)
-    {
-        $user = $this->userModel->findById($id);
-        if (!$user) {
-            $_SESSION['error'] = "Utilisateur non trouvé.";
-            header('Location: index.php?controller=user&action=index');
+    private function checkAuth() {
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = "Vous devez être connecté pour accéder à cette page.";
+            header('Location: index.php?controller=auth&action=login');
             exit;
         }
-        include 'views/users/show.php';
     }
 
     /**
-     * Affiche le formulaire de création d'un utilisateur
+     * Affiche le profil de l'utilisateur connecté
      */
-    public function create()
-    {
-        include 'views/users/create.php';
+    public function profile() {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $user = $this->userModel->findById($userId);
+
+        if (!$user) {
+            $_SESSION['error'] = "Utilisateur non trouvé.";
+            header('Location: index.php');
+            exit;
+        }
+
+        // Récupérer les liens d'affiliation de l'utilisateur
+        $links = $this->affiliateLinkModel->findByUserId($userId);
+
+        include 'views/users/profile.php';
     }
 
     /**
-     * Traite la soumission du formulaire de création
+     * Traite la soumission du formulaire de mise à jour du profil
      */
-    public function store() {
+    public function updateProfile() {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $user = $this->userModel->findById($userId);
+
+        if (!$user) {
+            $_SESSION['error'] = "Utilisateur non trouvé.";
+            header('Location: index.php');
+            exit;
+        }
+
+        // Récupérer les données du formulaire
         $pseudo = $_POST['pseudo'] ?? '';
         $email = $_POST['email'] ?? '';
-        $password = $_POST['password'] ?? '';
+        $currentPassword = $_POST['current_password'] ?? '';
+        $newPassword = $_POST['new_password'] ?? '';
         $confirmPassword = $_POST['confirm_password'] ?? '';
 
-
+        // Validation
         $errors = [];
-        if (empty($pseudo)) $errors[] = "Le pseudo est requis.";
-        if (empty($email)) $errors[] = "L'email est requis.";
-        if (empty($password)) $errors[] = "Le mot de passe est requis.";
-        if ($password !== $confirmPassword) $errors[] = "Les mots de passe ne correspondent pas.";
+        if (empty($pseudo)) $errors[] = "Le pseudo est obligatoire.";
+        if (empty($email)) $errors[] = "L'email est obligatoire.";
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "L'email est invalide.";
 
-
-        if ($this->userModel->findByPseudo($pseudo)) {
-            $errors[] = "Ce pseudo est déjà utilisé.";
+        // Vérifier si le pseudo est déjà utilisé (sauf par l'utilisateur actuel)
+        if ($pseudo !== $user['pseudo']) {
+            $existingUser = $this->userModel->findByPseudo($pseudo);
+            if ($existingUser && $existingUser['id'] != $userId) {
+                $errors[] = "Ce pseudo est déjà utilisé.";
+            }
         }
-        if ($this->userModel->findByEmail($email)) {
-            $errors[] = "Cet email est déjà utilisé.";
+
+        // Vérifier si l'email est déjà utilisé (sauf par l'utilisateur actuel)
+        if ($email !== $user['email']) {
+            $existingUser = $this->userModel->findByEmail($email);
+            if ($existingUser && $existingUser['id'] != $userId) {
+                $errors[] = "Cet email est déjà utilisé.";
+            }
+        }
+
+        // Si l'utilisateur souhaite changer son mot de passe
+        if (!empty($newPassword)) {
+            // Vérifier le mot de passe actuel
+            if (empty($currentPassword) || !password_verify($currentPassword, $user['password'])) {
+                $errors[] = "Le mot de passe actuel est incorrect.";
+            }
+
+            // Vérifier que le nouveau mot de passe est conforme aux exigences
+            if (strlen($newPassword) < 8) {
+                $errors[] = "Le nouveau mot de passe doit contenir au moins 8 caractères.";
+            }
+
+            // Vérifier que les deux mots de passe correspondent
+            if ($newPassword !== $confirmPassword) {
+                $errors[] = "Les mots de passe ne correspondent pas.";
+            }
         }
 
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
-            $_SESSION['form_data'] = ['pseudo' => $pseudo, 'email' => $email];
-            header('Location: index.php?controller=user&action=create');
+            $_SESSION['form_data'] = $_POST;
+            header('Location: index.php?controller=user&action=profile');
             exit;
         }
 
-        // Créer l'utilisateur
-        $activationToken = bin2hex(random_bytes(16));
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
+        // Préparer les données à mettre à jour
         $userData = [
             'pseudo' => $pseudo,
-            'email' => $email,
-            'password_hash' => $passwordHash,
-            'activation_token' => $activationToken
+            'email' => $email
         ];
 
-        $userId = $this->userModel->create($userData);
-
-        if ($userId) {
-            $_SESSION['success'] = "Utilisateur créé avec succès. Un email d'activation serait normalement envoyé.";
-            header('Location: index.php?controller=user&action=index');
-        } else {
-            $_SESSION['error'] = "Erreur lors de la création de l'utilisateur.";
-            header('Location: index.php?controller=user&action=create');
-        }
-        exit;
-    }
-
-    /**
-     * Affiche le formulaire d'édition d'un utilisateur
-     */
-    public function edit($id) {
-        $user = $this->userModel->findById($id);
-        if (!$user) {
-            $_SESSION['error'] = "Utilisateur non trouvé.";
-            header('Location: index.php?controller=user&action=index');
-            exit;
-        }
-        include 'views/users/edit.php';
-    }
-
-    /**
-     * Traite la soumission du formulaire d'édition
-     */
-    public function update($id) {
-        $user = $this->userModel->findById($id);
-        if (!$user) {
-            $_SESSION['error'] = "Utilisateur non trouvé.";
-            header('Location: index.php?controller=user&action=index');
-            exit;
+        // Si un nouveau mot de passe est fourni, le hacher
+        if (!empty($newPassword)) {
+            $userData['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
         }
 
-        $pseudo = $_POST['pseudo'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $is_active = isset($_POST['is_active']) ? 1 : 0;
-
-
-        $errors = [];
-        if (empty($pseudo)) $errors[] = "Le pseudo est requis.";
-        if (empty($email)) $errors[] = "L'email est requis.";
-
-
-        $existingPseudo = $this->userModel->findByPseudo($pseudo);
-        if ($existingPseudo && $existingPseudo['id'] != $id) {
-            $errors[] = "Ce pseudo est déjà utilisé.";
-        }
-
-        $existingEmail = $this->userModel->findByEmail($email);
-        if ($existingEmail && $existingEmail['id'] != $id) {
-            $errors[] = "Cet email est déjà utilisé.";
-        }
-
-        if (!empty($errors)) {
-            $_SESSION['errors'] = $errors;
-            header('Location: index.php?controller=user&action=edit&id=' . $id);
-            exit;
-        }
-
-
-        $userData = [
-            'pseudo' => $pseudo,
-            'email' => $email,
-            'is_active' => $is_active
-        ];
-
-        $updated = $this->userModel->update($id, $userData);
+        // Mettre à jour l'utilisateur
+        $updated = $this->userModel->update($userId, $userData);
 
         if ($updated) {
-            $_SESSION['success'] = "Utilisateur mis à jour avec succès.";
-            header('Location: index.php?controller=user&action=show&id=' . $id);
+            // Mettre à jour les données de session
+            $_SESSION['user']['pseudo'] = $pseudo;
+            $_SESSION['user']['email'] = $email;
+
+            $_SESSION['success'] = "Votre profil a été mis à jour avec succès.";
         } else {
-            $_SESSION['error'] = "Erreur lors de la mise à jour de l'utilisateur.";
-            header('Location: index.php?controller=user&action=edit&id=' . $id);
+            $_SESSION['error'] = "Erreur lors de la mise à jour du profil.";
         }
+
+        header('Location: index.php?controller=user&action=profile');
         exit;
     }
 
     /**
-     * Supprime un utilisateur
+     * Affiche la page pour changer la photo de profil
      */
-    public function delete($id) {
-        $user = $this->userModel->findById($id);
-        if (!$user) {
-            $_SESSION['error'] = "Utilisateur non trouvé.";
-            header('Location: index.php?controller=user&action=index');
-            exit;
-        }
+    public function editProfilePicture() {
+        $this->checkAuth();
 
-        // Confirmer la suppression
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
-            if ($this->userModel->delete($id)) {
-                $_SESSION['success'] = "Utilisateur supprimé avec succès.";
-                header('Location: index.php?controller=user&action=index');
-            } else {
-                $_SESSION['error'] = "Erreur lors de la suppression de l'utilisateur.";
-                header('Location: index.php?controller=user&action=show&id=' . $id);
+        $userId = $_SESSION['user']['id'];
+
+        // Si un fichier a été envoyé
+        if (isset($_FILES['profile_picture']) && $_FILES['profile_picture']['error'] === UPLOAD_ERR_OK) {
+            $uploadDir = 'uploads/profile_pictures/';
+
+            // Créer le répertoire s'il n'existe pas
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
             }
-            exit;
+
+            // Vérifier le type de fichier
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!in_array($_FILES['profile_picture']['type'], $allowedTypes)) {
+                $_SESSION['error'] = "Seuls les fichiers JPG, PNG et GIF sont acceptés.";
+                header('Location: index.php?controller=user&action=profile');
+                exit;
+            }
+
+            // Générer un nom unique pour le fichier
+            $extension = pathinfo($_FILES['profile_picture']['name'], PATHINFO_EXTENSION);
+            $filename = 'user_' . $userId . '_' . uniqid() . '.' . $extension;
+            $targetPath = $uploadDir . $filename;
+
+            // Déplacer le fichier uploadé
+            if (move_uploaded_file($_FILES['profile_picture']['tmp_name'], $targetPath)) {
+                // Récupérer l'ancienne photo de profil
+                $user = $this->userModel->findById($userId);
+                $oldPicture = $user['profile_picture'] ?? null;
+
+                // Mettre à jour l'utilisateur avec le nouveau chemin de la photo
+                $updated = $this->userModel->update($userId, ['profile_picture' => $targetPath]);
+
+                if ($updated) {
+                    // Supprimer l'ancienne photo si elle existe
+                    if ($oldPicture && file_exists($oldPicture)) {
+                        unlink($oldPicture);
+                    }
+
+                    $_SESSION['success'] = "Votre photo de profil a été mise à jour avec succès.";
+                } else {
+                    $_SESSION['error'] = "Erreur lors de la mise à jour de la photo de profil.";
+                }
+            } else {
+                $_SESSION['error'] = "Erreur lors de l'upload du fichier.";
+            }
+        } else {
+            $_SESSION['error'] = "Aucun fichier sélectionné ou erreur lors de l'upload.";
         }
 
-
-        include 'views/users/delete.php';
+        header('Location: index.php?controller=user&action=profile');
+        exit;
     }
 
     /**
-     * Active un compte utilisateur
+     * Réinitialisation du mot de passe (étape 1 : demande)
      */
-    public function activate($token) {
-        $query = "SELECT id FROM users WHERE activation_token = :token";
-        $stmt = $this->userModel->getDb()->prepare($query);
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    public function forgotPassword() {
+        include 'views/auth/forgot_password.php';
+    }
+
+    /**
+     * Traite la demande de réinitialisation de mot de passe
+     */
+    public function processForgotPassword() {
+        $email = $_POST['email'] ?? '';
+
+        if (empty($email)) {
+            $_SESSION['error'] = "Veuillez entrer votre adresse email.";
+            header('Location: index.php?controller=user&action=forgotPassword');
+            exit;
+        }
+
+        $user = $this->userModel->findByEmail($email);
 
         if ($user) {
-            $updated = $this->userModel->update($user['id'], [
-                'is_active' => 1,
-                'activation_token' => null
+            // Générer un token de réinitialisation
+            $resetToken = bin2hex(random_bytes(16));
+            $expiry = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+            // Enregistrer le token en base de données
+            $this->userModel->update($user['id'], [
+                'reset_token' => $resetToken,
+                'reset_token_expiry' => $expiry
             ]);
 
-            if ($updated) {
-                $_SESSION['success'] = "Votre compte a été activé avec succès. Vous pouvez maintenant vous connecter.";
-            } else {
-                $_SESSION['error'] = "Erreur lors de l'activation du compte.";
-            }
+            // Dans un environnement de production, envoyer un email avec le lien
+            // Ici, on simule l'envoi d'email
+            $resetLink = "index.php?controller=user&action=resetPassword&token=" . $resetToken;
+
+            $_SESSION['success'] = "Un email a été envoyé à votre adresse avec les instructions pour réinitialiser votre mot de passe. (Lien simulé: $resetLink)";
         } else {
-            $_SESSION['error'] = "Token d'activation invalide ou expiré.";
+            // Pour des raisons de sécurité, ne pas indiquer si l'email existe ou non
+            $_SESSION['success'] = "Si cette adresse email est enregistrée dans notre système, un email avec les instructions de réinitialisation sera envoyé.";
         }
 
         header('Location: index.php?controller=auth&action=login');
@@ -226,44 +252,97 @@ class UserController
     }
 
     /**
-     * Traite la demande de connexion
+     * Affiche le formulaire de réinitialisation de mot de passe
      */
-    public function login() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = $_POST['email'] ?? '';
-            $password = $_POST['password'] ?? '';
+    public function resetPassword() {
+        $token = $_GET['token'] ?? '';
 
-            $user = $this->userModel->authenticate($email, $password);
-
-            if ($user === false) {
-                $_SESSION['error'] = "Email ou mot de passe incorrect.";
-                header('Location: index.php?controller=auth&action=login');
-            } elseif (isset($user['error']) && $user['error'] === 'account_not_activated') {
-                $_SESSION['error'] = "Votre compte n'est pas encore activé. Veuillez vérifier votre email.";
-                header('Location: index.php?controller=auth&action=login');
-            } else {
-                // Authentification réussie
-                $_SESSION['user'] = $user;
-                $_SESSION['success'] = "Connexion réussie. Bienvenue, " . $user['pseudo'] . "!";
-                header('Location: index.php?controller=dashboard&action=index');
-            }
+        if (empty($token)) {
+            $_SESSION['error'] = "Token de réinitialisation manquant.";
+            header('Location: index.php?controller=auth&action=login');
             exit;
         }
 
+        // Vérifier si le token est valide et non expiré
+        $query = "SELECT id FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()";
+        $stmt = $this->userModel->getDb()->prepare($query);
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
 
-        include 'views/auth/login.php';
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $_SESSION['error'] = "Token de réinitialisation invalide ou expiré.";
+            header('Location: index.php?controller=auth&action=login');
+            exit;
+        }
+
+        include 'views/auth/reset_password.php';
     }
 
     /**
-     * Déconnexion de l'utilisateur
+     * Traite la soumission du formulaire de réinitialisation de mot de passe
      */
-    public function logout() {
+    public function processResetPassword() {
+        $token = $_POST['token'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
 
-        session_unset();
-        session_destroy();
+        // Vérifications
+        if (empty($token) || empty($password) || empty($confirmPassword)) {
+            $_SESSION['error'] = "Tous les champs sont obligatoires.";
+            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
+            exit;
+        }
 
+        if ($password !== $confirmPassword) {
+            $_SESSION['error'] = "Les mots de passe ne correspondent pas.";
+            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
+            exit;
+        }
 
-        header('Location: index.php');
+        if (strlen($password) < 8) {
+            $_SESSION['error'] = "Le mot de passe doit contenir au moins 8 caractères.";
+            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
+            exit;
+        }
+
+        // Vérifier si le token est valide et non expiré
+        $query = "SELECT id FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()";
+        $stmt = $this->userModel->getDb()->prepare($query);
+        $stmt->bindParam(':token', $token);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $_SESSION['error'] = "Token de réinitialisation invalide ou expiré.";
+            header('Location: index.php?controller=auth&action=login');
+            exit;
+        }
+
+        // Mettre à jour le mot de passe
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        $updated = $this->userModel->update($user['id'], [
+            'password_hash' => $passwordHash,
+            'reset_token' => null,
+            'reset_token_expiry' => null
+        ]);
+
+        if ($updated) {
+            $_SESSION['success'] = "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.";
+        } else {
+            $_SESSION['error'] = "Erreur lors de la réinitialisation du mot de passe.";
+        }
+
+        header('Location: index.php?controller=auth&action=login');
         exit;
     }
-}
+
+    /**
+     * Récupère la base de données
+     */
+    public function getDb() {
+        return $this->userModel->getDb();
+    }
