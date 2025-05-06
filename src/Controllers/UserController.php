@@ -346,3 +346,4 @@ class UserController {
     public function getDb() {
         return $this->userModel->getDb();
     }
+}
