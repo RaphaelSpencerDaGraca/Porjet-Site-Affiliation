@@ -4,28 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Affiliagram - Connexion</title>
-    <link rel="stylesheet" href="../../assets/css/style.css">
+    <link rel="stylesheet" href="../../css/login.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 <div class="container">
     <header>
         <div class="logo">Affiliagram</div>
-        <div class="header-right">
-            <a href="connexion.php" class="profile-link">Profil</a>
-            <div class="profile-icon">
-                <i class="fas fa-user-circle fa-lg"></i>
-            </div>
-        </div>
+        
     </header>
 
     <div class="zone-pub">
         <h2>Zone Pub</h2>
     </div>
 
-    <div class="back-link">
-        <a href="index.php"><i class="fas fa-arrow-left"></i> Retour</a>
-    </div>
 
     <div class="content-wrapper">
         <div class="main-area">
