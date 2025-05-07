@@ -112,7 +112,77 @@
         <div class="affiliate-links-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2>Mes liens d'affiliation</h2>
-                <button onclick="location.href='index.php?controller=affiliateLink&action=create'" class="button-primary">Ajouter un lien</button>
+                <button id="show-affiliate-form-btn" class="button-primary">Ajouter un lien</button>
+            </div>
+
+
+            <div id="affiliate-form-container" class="affiliate-form-container" style="display: none;">
+                <div class="affiliate-form">
+                    <h3>Ajouter un lien ou code d'affiliation</h3>
+
+                    <div class="form-tabs">
+                        <button type="button" class="tab-btn active" data-tab="link-form">Lien d'affiliation</button>
+                        <button type="button" class="tab-btn" data-tab="code-form">Code promo</button>
+                    </div>
+
+                    <div class="tab-content">
+
+                        <form id="link-form" action="index.php?controller=affiliateLink&action=store" method="post" class="tab-pane active">
+                            <div class="form-group">
+                                <label for="brand_id_link">Marque</label>
+                                <select id="brand_id_link" name="brand_id" required>
+                                    <option value="">Sélectionnez une marque</option>
+                                    <?php foreach($brands as $brand): ?>
+                                        <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="custom_link">Lien d'affiliation</label>
+                                <input type="url" id="custom_link" name="custom_link" required placeholder="https://exemple.com/ref=votrecode">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="expiry_date_link">Date d'expiration (optionnel)</label>
+                                <input type="date" id="expiry_date_link" name="expiry_date">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" id="cancel-link-form">Annuler</button>
+                                <button type="submit" class="button-primary">Ajouter le lien</button>
+                            </div>
+                        </form>
+
+                        <!-- Formulaire de code promo -->
+                        <form id="code-form" action="index.php?controller=affiliateCode&action=store" method="post" class="tab-pane">
+                            <div class="form-group">
+                                <label for="brand_id_code">Marque</label>
+                                <select id="brand_id_code" name="brand_id" required>
+                                    <option value="">Sélectionnez une marque</option>
+                                    <?php foreach($brands as $brand): ?>
+                                        <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="code">Code promo</label>
+                                <input type="text" id="code" name="code" required placeholder="PROMO10">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="expiry_date_code">Date d'expiration (optionnel)</label>
+                                <input type="date" id="expiry_date_code" name="expiry_date">
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" id="cancel-code-form">Annuler</button>
+                                <button type="submit" class="button-primary">Ajouter le code</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <?php if(empty($links)): ?>
@@ -128,7 +198,7 @@
                                 <?php if(!empty($link['logo_url']) && file_exists($link['logo_url'])): ?>
                                     <img src="<?php echo htmlspecialchars($link['logo_url']); ?>" alt="<?php echo htmlspecialchars($link['brand_name']); ?>">
                                 <?php else: ?>
-                                    <div style="width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background-color: #f5f5f5;">
+                                    <div style="width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background-color: #f5f5f5; font-size: 24px; font-weight: bold;">
                                         <?php echo htmlspecialchars(substr($link['brand_name'], 0, 1)); ?>
                                     </div>
                                 <?php endif; ?>
@@ -181,6 +251,7 @@
                     </div>
                 <?php endforeach; ?>
 
+                <!-- Pagination - à implémenter si nécessaire -->
                 <?php if(count($links) > 10): ?>
                     <div class="pagination">
                         <div class="page-number active">1</div>

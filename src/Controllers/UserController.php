@@ -44,8 +44,8 @@ class UserController {
 
         // Récupérer les liens d'affiliation de l'utilisateur
         $links = $this->affiliateLinkModel->findByUserId($userId);
-
-        include 'views/users/profile.php';
+        $brands = $this->brandModel->findActive();
+        include '../Views/profile.php';
     }
 
     /**
@@ -209,7 +209,7 @@ class UserController {
      * Réinitialisation du mot de passe (étape 1 : demande)
      */
     public function forgotPassword() {
-        include 'views/auth/forgot_password.php';
+        include 'views/authss/forgot_password.php';
     }
 
     /**

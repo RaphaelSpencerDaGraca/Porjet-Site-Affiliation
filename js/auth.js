@@ -94,3 +94,51 @@ function initPasswordMatch() {
     passwordInput.addEventListener('input', checkPasswordMatch);
     confirmPasswordInput.addEventListener('input', checkPasswordMatch);
 }
+
+// Script pour gérer le formulaire d'ajout de lien/code
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments du DOM
+    const showFormBtn = document.getElementById('show-affiliate-form-btn');
+    const formContainer = document.getElementById('affiliate-form-container');
+    const cancelLinkBtn = document.getElementById('cancel-link-form');
+    const cancelCodeBtn = document.getElementById('cancel-code-form');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    // Afficher le formulaire
+    showFormBtn.addEventListener('click', function() {
+        formContainer.style.display = 'block';
+        showFormBtn.style.display = 'none';
+    });
+
+    // Masquer le formulaire
+    function hideForm() {
+        formContainer.style.display = 'none';
+        showFormBtn.style.display = 'inline-block';
+    }
+
+    cancelLinkBtn.addEventListener('click', hideForm);
+    cancelCodeBtn.addEventListener('click', hideForm);
+
+    // Gestion des onglets
+    tabBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            // Retirer la classe active de tous les boutons
+            tabBtns.forEach(function(b) {
+                b.classList.remove('active');
+            });
+
+            // Ajouter la classe active au bouton cliqué
+            this.classList.add('active');
+
+            // Afficher le contenu de l'onglet correspondant
+            const tabId = this.getAttribute('data-tab');
+
+            tabPanes.forEach(function(pane) {
+                pane.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+        });
+    });
+});
