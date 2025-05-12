@@ -45,7 +45,7 @@ class UserController {
         // Récupérer les liens d'affiliation de l'utilisateur
         $links = $this->affiliateLinkModel->findByUserId($userId);
         $brands = $this->brandModel->findActive();
-        include '../Views/profile.php';
+        include __DIR__ . '/../Views/profile.php';
     }
 
     /**
