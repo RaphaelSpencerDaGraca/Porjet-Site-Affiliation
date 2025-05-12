@@ -20,7 +20,7 @@
             <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
                 <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Photo de profil">
             <?php else: ?>
-                <img src="assets/images/default-avatar.png" alt="Avatar par défaut">
+                <img src="../img/account.png" alt="Avatar par défaut">
             <?php endif; ?>
         </div>
     </div>
@@ -68,7 +68,7 @@
                 <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
                     <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Photo de profil">
                 <?php else: ?>
-                    <img src="assets/images/default-avatar.png" alt="Avatar par défaut">
+                    <img src="../img/account.png" alt="Avatar par défaut">
                 <?php endif; ?>
                 <div class="profile-picture-overlay" onclick="document.getElementById('profile-picture-upload').click();">
                     <span>Changer</span>
@@ -265,6 +265,6 @@
     </div>
 </div>
 
-<script src="../../js/profil.js"></script>
+<script src="../js/profil.js"></script>
 </body>
 </html>
