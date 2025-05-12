@@ -54,7 +54,8 @@ class AuthController
         }
 
         // Afficher le formulaire de connexion
-        include '../views/auth/login.php';
+        include __DIR__ . '/../Views/auth/login.php';
+
     }
 
     /**
@@ -133,7 +134,8 @@ class AuthController
         }
 
         // Afficher le formulaire d'inscription
-        include '../views/auth/register.php';
+        include __DIR__ . '/../Views/auth/register.php';
+
     }
 
     /**

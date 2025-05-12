@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - Affiliagram</title>
-    <link rel="stylesheet" href="../../../css/auth.css">
+    <link rel="stylesheet" href="../css/login.css">
 </head>
 <body>
 <header>
@@ -88,6 +88,18 @@
         </div>
     </div>
 </div>
+<footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#">CGU</a>
+                <a href="#">Politique de confidentialité</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; <?php echo date('Y'); ?> Affiliagram - Tous droits réservés
+            </div>
+        </div>
+    </footer>
 
 <script src="assets/js/auth.js"></script>
 </body>

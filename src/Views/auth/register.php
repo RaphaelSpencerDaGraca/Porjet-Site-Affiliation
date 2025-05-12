@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inscription - Affiliagram</title>
-    <link rel="stylesheet" href="../../../css/auth.css">
+    <link rel="stylesheet" href="../css/register.css">
 </head>
 <body>
 <header>
@@ -73,7 +73,7 @@
                     <input type="password" id="confirm_password" name="confirm_password" required>
                 </div>
 
-                <div class="form-group terms">
+                <div class="form-group-terms">
                     <input type="checkbox" id="terms" name="terms" required>
                     <label for="terms">J'accepte les <a href="index.php?controller=page&action=terms" target="_blank">conditions générales d'utilisation</a> et la <a href="index.php?controller=page&action=privacy" target="_blank">politique de confidentialité</a>.</label>
                 </div>
@@ -116,7 +116,19 @@
         </div>
     </div>
 </div>
+<footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#">CGU</a>
+                <a href="#">Politique de confidentialité</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="copyright">
+                &copy; <?php echo date('Y'); ?> Affiliagram - Tous droits réservés
+            </div>
+        </div>
+    </footer>
 
-<script src="../../../js/auth.js"></script>
+<script src="../js/auth.js"></script>
 </body>
 </html> 

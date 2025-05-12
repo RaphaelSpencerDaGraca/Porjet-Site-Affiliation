@@ -115,6 +115,9 @@
     outline: none;
     border-color: #F2CA96;
   }
+  .form-group-terms{
+    margin: 3%;
+  }
   
   /* Lien mot de passe oublié */
   .forgot-password-link {
