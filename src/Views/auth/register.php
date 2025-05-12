@@ -61,9 +61,6 @@
                     <label for="password">Mot de passe</label>
                     <input type="password" id="password" name="password" required minlength="8">
                     <div class="password-strength">
-                        <div class="strength-bar">
-                            <div class="strength-level" id="strength-level"></div>
-                        </div>
                         <div class="strength-text" id="strength-text">Force du mot de passe</div>
                     </div>
                 </div>
@@ -129,6 +126,6 @@
         </div>
     </footer>
 
-<script src="../js/auth.js"></script>
+<script src="../js/register.js"></script>
 </body>
 </html> 

@@ -16,30 +16,27 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initPasswordStrength() {
     const passwordInput = document.getElementById('password');
-    const strengthLevel = document.getElementById('strength-level');
     const strengthText = document.getElementById('strength-text');
 
-    if (!passwordInput || !strengthLevel || !strengthText) return;
+    if (!passwordInput || !strengthText) return;
 
     passwordInput.addEventListener('input', function() {
         const password = passwordInput.value;
         const score = calculatePasswordStrength(password);
 
-        // Mise à jour de la barre de progression
-        strengthLevel.style.width = score + '%';
 
         // Mise à jour de la couleur en fonction de la force
         if (score < 30) {
-            strengthLevel.style.backgroundColor = '#ff4d4d'; // Rouge
+            strengthText.style.color = '#ff4d4d'; // Rouge
             strengthText.textContent = 'Faible';
         } else if (score < 60) {
-            strengthLevel.style.backgroundColor = '#ffa64d'; // Orange
+            strengthText.style.color = '#ffa64d'; // Orange
             strengthText.textContent = 'Moyen';
         } else if (score < 80) {
-            strengthLevel.style.backgroundColor = '#99cc00'; // Vert clair
+            strengthText.style.color = '#99cc00'; // Vert clair
             strengthText.textContent = 'Bon';
         } else {
-            strengthLevel.style.backgroundColor = '#00cc44'; // Vert
+            strengthText.style.color = '#00cc44'; // Vert
             strengthText.textContent = 'Excellent';
         }
     });
