@@ -14,33 +14,64 @@ document.addEventListener('DOMContentLoaded', function() {
 /**
  * Initialise l'indicateur de force du mot de passe
  */
-function initPasswordStrength() {
+// Script pour l'indicateur de force du mot de passe
+document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('password');
+    const strengthMeter = document.getElementById('password-strength-meter');
     const strengthText = document.getElementById('strength-text');
+    const confirmPasswordInput = document.getElementById('confirm_password');
 
-    if (!passwordInput || !strengthText) return;
+    if(passwordInput && strengthMeter && strengthText) {
+        passwordInput.addEventListener('input', function() {
+            const password = passwordInput.value;
+            let strength = 0;
 
-    passwordInput.addEventListener('input', function() {
-        const password = passwordInput.value;
-        const score = calculatePasswordStrength(password);
+            // Calculer la force
+            if(password.length >= 8) strength += 25;
+            if(password.match(/[a-z]+/)) strength += 15;
+            if(password.match(/[A-Z]+/)) strength += 20;
+            if(password.match(/[0-9]+/)) strength += 20;
+            if(password.match(/[^a-zA-Z0-9]+/)) strength += 20;
 
+            // Mettre à jour la barre de progression
+            strengthMeter.style.width = strength + '%';
 
-        // Mise à jour de la couleur en fonction de la force
-        if (score < 30) {
-            strengthText.style.color = '#ff4d4d'; // Rouge
-            strengthText.textContent = 'Faible';
-        } else if (score < 60) {
-            strengthText.style.color = '#ffa64d'; // Orange
-            strengthText.textContent = 'Moyen';
-        } else if (score < 80) {
-            strengthText.style.color = '#99cc00'; // Vert clair
-            strengthText.textContent = 'Bon';
-        } else {
-            strengthText.style.color = '#00cc44'; // Vert
-            strengthText.textContent = 'Excellent';
-        }
-    });
-}
+            // Mise à jour du texte et de la couleur
+            if(strength < 30) {
+                strengthMeter.style.backgroundColor = '#f44336'; // Rouge
+                strengthText.textContent = 'Faible';
+            } else if(strength < 60) {
+                strengthMeter.style.backgroundColor = '#ff9800'; // Orange
+                strengthText.textContent = 'Moyen';
+            } else if(strength < 80) {
+                strengthMeter.style.backgroundColor = '#4CAF50'; // Vert
+                strengthText.textContent = 'Bon';
+            } else {
+                strengthMeter.style.backgroundColor = '#2E7D32'; // Vert foncé
+                strengthText.textContent = 'Excellent';
+            }
+        });
+    }
+
+    // Vérification de correspondance des mots de passe
+    if(passwordInput && confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', function() {
+            if(passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                confirmPasswordInput.setCustomValidity('');
+            }
+        });
+
+        passwordInput.addEventListener('input', function() {
+            if(confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordInput.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                confirmPasswordInput.setCustomValidity('');
+            }
+        });
+    }
+});
 
 /**
  * Calcule la force d'un mot de passe
