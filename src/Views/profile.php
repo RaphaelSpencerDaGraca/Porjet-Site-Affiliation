@@ -111,17 +111,17 @@
 
         <div class="affiliate-links-section">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>Mes liens d'affiliation</h2>
+                <h2>Mes liens de parrainage</h2>
                 <button id="show-affiliate-form-btn" class="button-primary">Ajouter un lien</button>
             </div>
 
 
             <div id="affiliate-form-container" class="affiliate-form-container" style="display: none;">
                 <div class="affiliate-form">
-                    <h3>Ajouter un lien ou code d'affiliation</h3>
+                    <h3>Ajouter un lien ou code de parrainage</h3>
 
                     <div class="form-tabs">
-                        <button type="button" class="tab-btn active" data-tab="link-form">Lien d'affiliation</button>
+                        <button type="button" class="tab-btn active" data-tab="link-form">Lien de parrainage</button>
                         <button type="button" class="tab-btn" data-tab="code-form">Code promo</button>
                     </div>
 
@@ -139,7 +139,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label for="custom_link">Lien d'affiliation</label>
+                                <label for="custom_link">Lien de parrainage</label>
                                 <input type="url" id="custom_link" name="custom_link" required placeholder="https://exemple.com/ref=votrecode">
                             </div>
 
@@ -187,8 +187,8 @@
 
             <?php if(empty($links)): ?>
                 <div style="text-align: center; padding: 30px 0;">
-                    <p>Vous n'avez pas encore de liens d'affiliation.</p>
-                    <p>Commencez par ajouter votre premier lien d'affiliation en cliquant sur le bouton ci-dessus.</p>
+                    <p>Vous n'avez pas encore de liens de parrainage.</p>
+                    <p>Commencez par ajouter votre premier lien de parrainage en cliquant sur le bouton ci-dessus.</p>
                 </div>
             <?php else: ?>
                 <?php foreach($links as $link): ?>
