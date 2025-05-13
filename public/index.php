@@ -1,4 +1,5 @@
-    <?php
+ <?php
+global $pdo;
     // public/index.php
 
     // 0) Démarrer la session pour gérer les messages flash, la connexion utilisateur, etc.
@@ -16,6 +17,7 @@
     require_once __DIR__ . '/../src/Controllers/UserController.php';
     require_once __DIR__ . '/../src/Controllers/AuthController.php';
     require_once __DIR__ . '/../src/Controllers/AffiliateLinkController.php';
+    require_once __DIR__ . '/../src/Controllers/HomeController.php';
     
 
     // 3) Instancier les modèles et les contrôleurs
@@ -26,14 +28,25 @@
     $userController  = new UserController($userModel, $affiliateLinkModel, $brandModel);
     $authController  = new AuthController($userModel);
     $affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel);
+    $homeController = new HomeController();
 
 
     // 4) Lire les paramètres de routing
-    $controller = isset($_GET['controller']) ? strtolower($_GET['controller']) : 'brand';
+    $controller = isset($_GET['controller']) ? strtolower($_GET['controller']) : 'home';
     $action     = isset($_GET['action'])     ? $_GET['action']           : 'index';
 
     // 5) Dispatcher la requête
     switch ($controller) {
+        case 'home':
+            // Gestion de la page d'accueil
+            if (method_exists($homeController, $action)) {
+                $homeController->{$action}();
+            } else {
+                // Action inexistante → 404
+                http_response_code(404);
+                echo "Action « {$action} » introuvable pour le contrôleur Home.";
+            }
+            break;
         case 'brand':
             // On garde l'instance $brandController
             if (method_exists($brandController, $action)) {

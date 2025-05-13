@@ -39,11 +39,6 @@ class AuthController
                 $_SESSION['form_data'] = ['email' => $email];
                 header('Location: index.php?controller=auth&action=login');
                 exit;
-            } elseif (isset($user['error']) && $user['error'] === 'account_not_activated') {
-                $_SESSION['error'] = "Votre compte n'est pas encore activé. Veuillez vérifier votre email.";
-                $_SESSION['form_data'] = ['email' => $email];
-                header('Location: index.php?controller=auth&action=login');
-                exit;
             }
 
             // Authentification réussie
@@ -55,7 +50,6 @@ class AuthController
 
         // Afficher le formulaire de connexion
         include __DIR__ . '/../Views/auth/login.php';
-
     }
 
     /**
@@ -111,25 +105,22 @@ class AuthController
                 'email' => $email,
                 'password_hash' => $passwordHash,
                 'activation_token' => $activationToken,
-                'is_active' => 0 // Compte non activé par défaut
+                'is_active' => 1 // Compte non activé par défaut
             ];
 
             $userId = $this->userModel->create($userData);
 
+            $userId = $this->userModel->create($userData);
+
             if ($userId) {
-                // Envoyer un email d'activation (simulé ici)
-                $activationLink = "index.php?controller=auth&action=activate&token=" . $activationToken;
-
-                // Dans un environnement de production, envoyez un véritable email ici
-                // mail($email, 'Activation de votre compte', "Cliquez sur ce lien pour activer votre compte: $activationLink");
-
-                $_SESSION['success'] = "Votre compte a été créé avec succès. Un email d'activation a été envoyé à votre adresse. (Lien simulé: $activationLink)";
+                $_SESSION['success'] = "Votre compte a été créé avec succès. Vous pouvez maintenant vous connecter.";
                 header('Location: index.php?controller=auth&action=login');
             } else {
                 $_SESSION['error'] = "Erreur lors de la création du compte.";
                 $_SESSION['form_data'] = ['pseudo' => $pseudo, 'email' => $email];
                 header('Location: index.php?controller=auth&action=register');
             }
+            exit;
             exit;
         }
 
@@ -141,7 +132,7 @@ class AuthController
     /**
      * Active un compte utilisateur
      */
-    public function activate()
+    /*public function activate()
     {
         $token = $_GET['token'] ?? '';
 
@@ -177,7 +168,7 @@ class AuthController
 
         header('Location: index.php?controller=auth&action=login');
         exit;
-    }
+    }*/
 
     /**
      * Déconnexion de l'utilisateur
@@ -188,8 +179,8 @@ class AuthController
         session_unset();
         session_destroy();
 
-        // Rediriger vers la page d'accueil
-        header('Location: index.php');
+        // Rediriger vers la page d'accueil avec le contrôleur home
+        header('Location: index.php?controller=home&action=index');
         exit;
     }
 }

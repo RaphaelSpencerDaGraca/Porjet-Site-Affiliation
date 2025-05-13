@@ -34,7 +34,8 @@ class BrandController
     {
         // Pour la liste publique des marques, on affiche uniquement les marques actives
         $brands = $this->brandModel->findActive();
-        include 'views/brands/index.php';
+        include __DIR__.'/../Views/profile.php';
+
     }
 
     /**

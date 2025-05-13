@@ -16,39 +16,12 @@ class BrandModel extends BaseModel
  * Récupère les marques actives qui ont au moins
  * un lien ou un code, avec compteur distinct de liens et codes.
  */
-public function findActive(): array
-{
-    $sql = <<<'SQL'
-SELECT
-    b.id,
-    b.name,
-    b.description_bonus   AS description,
-    b.logo_url,
-    b.website_url,
-    b.bonus,
-    b.is_active,
-    b.created_at,
-
-    -- compte distinct des liens
-    COUNT(DISTINCT al.id) AS link_count,
-    -- compte distinct des codes
-    COUNT(DISTINCT ac.id) AS code_count
-
-FROM brands b
-    LEFT JOIN affiliate_links al  ON al.brand_id = b.id AND al.is_active = 1
-    LEFT JOIN affiliate_codes ac  ON ac.brand_id = b.id AND ac.is_active = 1
-
-WHERE b.is_active = 1
-
-GROUP BY b.id
-HAVING link_count > 0 OR code_count > 0
-ORDER BY b.name ASC
-SQL;
-
-    $stmt = $this->db->prepare($sql);
-    $stmt->execute();
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    public function findActive() {
+        $query = "SELECT * FROM brands WHERE is_active = 1 ORDER BY name ASC";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     /**
      * Récupère une seule marque active par son nom,
@@ -60,7 +33,6 @@ SQL;
 SELECT
     b.id,
     b.name,
-    b.description_bonus    AS description,
     b.logo_url,
     b.website_url,
     b.bonus,
@@ -84,7 +56,7 @@ SQL;
     {
         $sql = <<<'SQL'
 INSERT INTO brands
-    (name, description_bonus, logo_url, website_url, bonus)
+    (name, logo_url, website_url, bonus)
 VALUES
     (:name, :description,     :logo_url, :website_url, :bonus)
 SQL;

@@ -12,7 +12,7 @@ class UserModel extends BaseModel {
      * Vérifie les identifiants de connexion
      */
     public function authenticate($email, $password) {
-        $query = "SELECT id, pseudo, email, password_hash, is_active FROM users WHERE email = :email";
+        $query = "SELECT id, pseudo, email, password_hash FROM users WHERE email = :email";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':email', $email);
         $stmt->execute();
@@ -27,10 +27,7 @@ class UserModel extends BaseModel {
             return false;
         }
 
-        if (!$user['is_active']) {
-            return ['error' => 'account_not_activated'];
-        }
-
+        // Supprimer la vérification d'activation
         // Ne pas retourner le hash du mot de passe
         unset($user['password_hash']);
         return $user;
