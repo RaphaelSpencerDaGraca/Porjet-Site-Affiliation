@@ -45,6 +45,14 @@ class UserController {
         // Récupérer les liens d'affiliation de l'utilisateur
         $links = $this->affiliateLinkModel->findByUserId($userId);
         $brands = $this->brandModel->findActive();
+
+        if (!isset($brands) || !is_array($brands)) {
+            // Si $brands n'est pas défini ou n'est pas un tableau, initialiser un tableau vide
+            $brands = [];
+            // Optionnel : ajouter un message d'erreur pour le débogage
+            $_SESSION['error'] = "Erreur lors de la récupération des marques.";
+        }
+
         include __DIR__ . '/../Views/profile.php';
     }
 
@@ -251,94 +259,6 @@ class UserController {
         exit;
     }
 
-    /**
-     * Affiche le formulaire de réinitialisation de mot de passe
-     */
-    public function resetPassword() {
-        $token = $_GET['token'] ?? '';
-
-        if (empty($token)) {
-            $_SESSION['error'] = "Token de réinitialisation manquant.";
-            header('Location: index.php?controller=auth&action=login');
-            exit;
-        }
-
-        // Vérifier si le token est valide et non expiré
-        $query = "SELECT id FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()";
-        $stmt = $this->userModel->getDb()->prepare($query);
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            $_SESSION['error'] = "Token de réinitialisation invalide ou expiré.";
-            header('Location: index.php?controller=auth&action=login');
-            exit;
-        }
-
-        include 'views/auth/reset_password.php';
-    }
-
-    /**
-     * Traite la soumission du formulaire de réinitialisation de mot de passe
-     */
-    public function processResetPassword() {
-        $token = $_POST['token'] ?? '';
-        $password = $_POST['password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
-
-        // Vérifications
-        if (empty($token) || empty($password) || empty($confirmPassword)) {
-            $_SESSION['error'] = "Tous les champs sont obligatoires.";
-            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
-            exit;
-        }
-
-        if ($password !== $confirmPassword) {
-            $_SESSION['error'] = "Les mots de passe ne correspondent pas.";
-            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
-            exit;
-        }
-
-        if (strlen($password) < 8) {
-            $_SESSION['error'] = "Le mot de passe doit contenir au moins 8 caractères.";
-            header('Location: index.php?controller=user&action=resetPassword&token=' . urlencode($token));
-            exit;
-        }
-
-        // Vérifier si le token est valide et non expiré
-        $query = "SELECT id FROM users WHERE reset_token = :token AND reset_token_expiry > NOW()";
-        $stmt = $this->userModel->getDb()->prepare($query);
-        $stmt->bindParam(':token', $token);
-        $stmt->execute();
-
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$user) {
-            $_SESSION['error'] = "Token de réinitialisation invalide ou expiré.";
-            header('Location: index.php?controller=auth&action=login');
-            exit;
-        }
-
-        // Mettre à jour le mot de passe
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-
-        $updated = $this->userModel->update($user['id'], [
-            'password_hash' => $passwordHash,
-            'reset_token' => null,
-            'reset_token_expiry' => null
-        ]);
-
-        if ($updated) {
-            $_SESSION['success'] = "Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.";
-        } else {
-            $_SESSION['error'] = "Erreur lors de la réinitialisation du mot de passe.";
-        }
-
-        header('Location: index.php?controller=auth&action=login');
-        exit;
-    }
 
     /**
      * Récupère la base de données

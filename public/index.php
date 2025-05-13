@@ -83,13 +83,23 @@ global $pdo;
 
         case 'affiliatelink':
             if (method_exists($affiliateLinkController, $action)) {
-                $affiliateLinkController->{$action}();
+                // Vérifier si le paramètre ID est nécessaire
+                if ($action === 'delete' || $action === 'edit' || $action === 'show') {
+                    // Ces actions ont besoin d'un ID
+                    $id = isset($_GET['id']) ? $_GET['id'] : null;
+                    if ($id === null) {
+                        echo "Erreur: ID manquant pour l'action $action";
+                        exit;
+                    }
+                    $affiliateLinkController->{$action}($id);
+                } else {
+                    $affiliateLinkController->{$action}();
+                }
             } else {
                 http_response_code(404);
                 echo "Action « {$action} » introuvable pour le contrôleur AffiliateLink.";
             }
             break;
-
         default:
             // Contrôleur inconnu → 404
             http_response_code(404);

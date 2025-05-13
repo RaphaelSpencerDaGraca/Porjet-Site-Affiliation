@@ -132,9 +132,13 @@
                                 <label for="brand_id_link">Marque</label>
                                 <select id="brand_id_link" name="brand_id" required>
                                     <option value="">Sélectionnez une marque</option>
-                                    <?php foreach($brands as $brand): ?>
-                                        <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
-                                    <?php endforeach; ?>
+                                    <?php if (isset($brands) && is_array($brands)): ?>
+                                        <?php foreach($brands as $brand): ?>
+                                            <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <option value="" disabled>Aucune marque disponible</option>
+                                    <?php endif; ?>
                                 </select>
                             </div>
 
@@ -160,9 +164,13 @@
                                 <label for="brand_id_code">Marque</label>
                                 <select id="brand_id_code" name="brand_id" required>
                                     <option value="">Sélectionnez une marque</option>
-                                    <?php foreach($brands as $brand): ?>
-                                        <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
-                                    <?php endforeach; ?>
+                                    <?php if (isset($brands) && is_array($brands)): ?>
+                                        <?php foreach($brands as $brand): ?>
+                                            <option value="<?php echo $brand['id']; ?>"><?php echo htmlspecialchars($brand['name']); ?></option>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <option value="" disabled>Aucune marque disponible</option>
+                                    <?php endif; ?>
                                 </select>
                             </div>
 

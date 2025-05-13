@@ -52,7 +52,7 @@
             $userId = $_SESSION['user']['id'];
             $links = $this->affiliateLinkModel->findByUserId($userId);
 
-            include 'views/'.$this->affiliateLinkScript;
+            include __DIR__.'/../Views/profile.php';
         }
 
         /**
@@ -100,7 +100,6 @@
 
             $userId = $_SESSION['user']['id'];
             $brandId = $_POST['brand_id'] ?? '';
-            $code = $_POST['code'] ?? '';
             $customLink = $_POST['custom_link'] ?? '';
             $expiryDate = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
 
@@ -132,7 +131,6 @@
             $linkData = [
                 'user_id' => $userId,
                 'brand_id' => $brandId,
-                'code' => $code,
                 'custom_link' => $customLink,
                 'expiry_date' => $expiryDate
             ];
@@ -199,14 +197,12 @@
                 exit;
             }
 
-            $code = $_POST['code'] ?? '';
             $customLink = $_POST['custom_link'] ?? '';
             $expiryDate = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
             $isActive = isset($_POST['is_active']) ? 1 : 0;
 
 
             $linkData = [
-                'code' => $code,
                 'custom_link' => $customLink,
                 'expiry_date' => $expiryDate,
                 'is_active' => $isActive
@@ -227,39 +223,37 @@
         /**
          * Supprime un lien d'affiliation
          */
-        public function delete($id) {
-            $this->checkAuth();
+        /**
+         * Supprime un lien d'affiliation
+         */
+        public function delete($id)
+        {
+            // Vérifier si l'utilisateur est connecté
+            if (!isset($_SESSION['user'])) {
+                $_SESSION['error'] = "Vous devez être connecté pour effectuer cette action.";
+                header('Location: index.php?controller=auth&action=login');
+                exit;
+            }
 
             $userId = $_SESSION['user']['id'];
             $link = $this->affiliateLinkModel->findById($id);
 
-            if (!$link) {
-                $_SESSION['error'] = "Lien d'affiliation non trouvé.";
-                header('Location: index.php?controller=affiliateLink&action=index');
+            // Vérifier si le lien existe et appartient à l'utilisateur connecté
+            if (!$link || $link['user_id'] != $userId) {
+                $_SESSION['error'] = "Ce lien d'affiliation n'existe pas ou vous n'avez pas les droits pour le supprimer.";
+                header('Location: index.php?controller=user&action=profile');
                 exit;
             }
 
-
-            if ($link['user_id'] != $userId && $_SESSION['user']['role'] !== 'admin') {
-                $_SESSION['error'] = "Vous n'avez pas accès à ce lien d'affiliation.";
-                header('Location: index.php?controller=affiliateLink&action=index');
-                exit;
+            // IMPORTANT: Effectuer une véritable suppression dans la base de données
+            if ($this->affiliateLinkModel->delete($id)) {
+                $_SESSION['success'] = "Lien d'affiliation supprimé avec succès.";
+            } else {
+                $_SESSION['error'] = "Erreur lors de la suppression du lien d'affiliation.";
             }
 
-
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete'])) {
-                if ($this->affiliateLinkModel->delete($id)) {
-                    $_SESSION['success'] = "Lien d'affiliation supprimé avec succès.";
-                    header('Location: index.php?controller=affiliateLink&action=index');
-                } else {
-                    $_SESSION['error'] = "Erreur lors de la suppression du lien d'affiliation.";
-                    header('Location: index.php?controller=affiliateLink&action=show&id=' . $id);
-                }
-                exit;
-            }
-
-
-            include 'views/affiliate_links/delete.php';
+            header('Location: index.php?controller=user&action=profile');
+            exit;
         }
 
         /**
@@ -398,7 +392,6 @@
                 'Utilisateur',
                 'Email',
                 'Marque',
-                'Code',
                 'Lien personnalisé',
                 'Date de création',
                 'Date d\'expiration',
@@ -412,7 +405,6 @@
                     $link['user_pseudo'] ?? '',
                     $link['user_email'] ?? '',
                     $link['brand_name'] ?? '',
-                    $link['code'],
                     $link['custom_link'],
                     $link['created_at'],
                     $link['expiry_date'] ?? 'Pas d\'expiration',

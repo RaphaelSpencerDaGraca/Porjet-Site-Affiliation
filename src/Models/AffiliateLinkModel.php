@@ -50,12 +50,11 @@ class AffiliateLinkModel extends BaseModel {
      * Crée un nouveau lien d'affiliation
      */
     public function create($data) {
-        $query = "INSERT INTO affiliate_links (user_id, brand_id, code, custom_link, expiry_date) 
-                 VALUES (:user_id, :brand_id, :code, :custom_link, :expiry_date)";
+        $query = "INSERT INTO affiliate_links (user_id, brand_id, custom_link, expiry_date) 
+                 VALUES (:user_id, :brand_id,:custom_link, :expiry_date)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':user_id', $data['user_id'], PDO::PARAM_INT);
         $stmt->bindParam(':brand_id', $data['brand_id'], PDO::PARAM_INT);
-        $stmt->bindParam(':code', $data['code']);
         $stmt->bindParam(':custom_link', $data['custom_link']);
         $stmt->bindParam(':expiry_date', $data['expiry_date']);
 
@@ -64,6 +63,16 @@ class AffiliateLinkModel extends BaseModel {
         }
 
         return false;
+    }
+
+    /**
+     * Supprime un lien d'affiliation
+     */
+    public function delete($id) {
+        $query = "DELETE FROM affiliate_links WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     /**
