@@ -155,7 +155,7 @@
                         </form>
 
                         <!-- Formulaire de code promo -->
-                        <form id="code-form" action="index.php?controller=affiliateCode&action=store" method="post" class="tab-pane">
+                        <form id="code-form" action="index.php?controller=affiliateLink&action=store" method="post" class="tab-pane">
                             <div class="form-group">
                                 <label for="brand_id_code">Marque</label>
                                 <select id="brand_id_code" name="brand_id" required>
