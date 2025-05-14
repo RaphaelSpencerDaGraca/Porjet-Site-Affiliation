@@ -17,7 +17,7 @@
     <div class="header-content">
         <div class="logo">Affiliagram</div>
         <div class="user-icon">
-            <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
+            <?php if (isset($user) && !empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
                 <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Photo de profil">
             <?php else: ?>
                 <img src="../img/account.png" alt="Avatar par défaut">
@@ -28,11 +28,6 @@
 
 <div class="zone-pub">
     Zone Pub
-</div>
-
-<div class="information">
-    <p>Postez un maximum de liens et codes de parrainage pour être mis en avant!</p>
-    <button onclick="window.location.href='index.php?controller=brand&action=searchSite';" class="button-primary"><strong>Je décourvre les liens</strong></button>
 </div>
 
 <div class="container">
@@ -111,7 +106,7 @@
             <h1>Mon profil</h1>
 
             <div class="profile-picture">
-                <?php if (!empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
+                <?php if (isset($user) && !empty($user['profile_picture']) && file_exists($user['profile_picture'])): ?>
                     <img src="<?php echo htmlspecialchars($user['profile_picture']); ?>" alt="Photo de profil">
                 <?php else: ?>
                     <img src="../img/account.png" alt="Avatar par défaut">
@@ -128,12 +123,12 @@
             <form action="index.php?controller=user&action=updateProfile" method="post">
                 <div class="form-group">
                     <label for="pseudo">Pseudo</label>
-                    <input type="text" id="pseudo" name="pseudo" value="<?php echo htmlspecialchars($user['pseudo']); ?>" required>
+                    <input type="text" id="pseudo" name="pseudo" value="<?php echo isset($user) && isset($user['pseudo']) ? htmlspecialchars($user['pseudo']) : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                    <input type="email" id="email" name="email" value="<?php echo isset($user) && isset($user['email']) ? htmlspecialchars($user['email']) : ''; ?>" required>
                 </div>
 
                 <div class="form-group">
