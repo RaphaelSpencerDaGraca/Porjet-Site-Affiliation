@@ -42,8 +42,8 @@
 
             <strong><?= htmlspecialchars($brand['name']) ?></strong>
 
-            <p>Liens disponibles: <span><?= htmlspecialchars($brand['link_count']) ?></span></p>
-            <p>Codes disponibles: <span><?= htmlspecialchars($brand['code_count']) ?></span></p>
+            <p>Liens disponibles: <span><?= htmlspecialchars($brand['link_count'] ?? 0) ?></span></p>
+            <p>Codes disponibles: <span><?= htmlspecialchars($brand['code_count'] ?? 0) ?></span></p>
             <p>Bonus jusqu’à <span><?= htmlspecialchars($brand['bonus']) ?></span> €</p>
 
             <button

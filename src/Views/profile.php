@@ -30,6 +30,11 @@
     Zone Pub
 </div>
 
+<div class="information">
+    <p>Postez un maximum de liens et codes de parrainage pour être mis en avant!</p>
+    <button onclick="window.location.href='index.php?controller=brand&action=searchSite';">Je décourvre les liens</button>
+</div>
+
 <div class="container">
     <nav>
         <ul class="breadcrumb">
