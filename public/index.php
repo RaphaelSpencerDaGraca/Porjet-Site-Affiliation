@@ -1,108 +1,133 @@
- <?php
+<?php
 global $pdo;
-    // public/index.php
+// public/index.php
 
-    // 0) Démarrer la session pour gérer les messages flash, la connexion utilisateur, etc.
-    session_start();
+// 0) Démarrer la session pour gérer les messages flash, la connexion utilisateur, etc.
+session_start();
 
-    // 1) Charger la connexion PDO
-    require_once __DIR__ . '/../src/Core/dbconnect.php';    // définit $db (PDO instance)
+// 1) Charger la connexion PDO
+require_once __DIR__ . '/../src/Core/dbconnect.php';    // définit $db (PDO instance)
 
-    // 2) Charger les classes (BaseModel, Model, Controller)
-    require_once __DIR__ . '/../src/Models/BaseModel.php';
-    require_once __DIR__ . '/../src/Models/BrandModel.php';
-    require_once __DIR__ . '/../src/Models/UserModel.php';
-    require_once __DIR__ . '/../src/Models/AffiliateLinkModel.php';
-    require_once __DIR__ . '/../src/Controllers/BrandController.php';
-    require_once __DIR__ . '/../src/Controllers/UserController.php';
-    require_once __DIR__ . '/../src/Controllers/AuthController.php';
-    require_once __DIR__ . '/../src/Controllers/AffiliateLinkController.php';
-    require_once __DIR__ . '/../src/Controllers/HomeController.php';
-    
-
-    // 3) Instancier les modèles et les contrôleurs
-    $brandModel      = new BrandModel($pdo);
-    $userModel       = new UserModel($pdo);
-    $affiliateLinkModel = new AffiliateLinkModel($pdo);
-    $brandController = new BrandController($brandModel);
-    $userController  = new UserController($userModel, $affiliateLinkModel, $brandModel);
-    $authController  = new AuthController($userModel);
-    $affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel);
-    $homeController = new HomeController();
+// 2) Charger les classes (BaseModel, Model, Controller)
+require_once __DIR__ . '/../src/Models/BaseModel.php';
+require_once __DIR__ . '/../src/Models/BrandModel.php';
+require_once __DIR__ . '/../src/Models/UserModel.php';
+require_once __DIR__ . '/../src/Models/AffiliateLinkModel.php';
+require_once __DIR__ . '/../src/Models/AffiliateCodeModel.php';
+require_once __DIR__ . '/../src/Controllers/BrandController.php';
+require_once __DIR__ . '/../src/Controllers/UserController.php';
+require_once __DIR__ . '/../src/Controllers/AuthController.php';
+require_once __DIR__ . '/../src/Controllers/AffiliateLinkController.php';
+require_once __DIR__ . '/../src/Controllers/AffiliateCodeController.php';
+require_once __DIR__ . '/../src/Controllers/HomeController.php';
 
 
-    // 4) Lire les paramètres de routing
-    $controller = isset($_GET['controller']) ? strtolower($_GET['controller']) : 'home';
-    $action     = isset($_GET['action'])     ? $_GET['action']           : 'index';
+// 3) Instancier les modèles et les contrôleurs
+$brandModel      = new BrandModel($pdo);
+$userModel       = new UserModel($pdo);
+$affiliateLinkModel = new AffiliateLinkModel($pdo);
+$affiliateCodeModel = new AffiliateCodeModel($pdo);
+$brandController = new BrandController($brandModel);
+// Mise à jour: ajout de $affiliateCodeModel dans le UserController
+$userController  = new UserController($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel);
+$authController  = new AuthController($userModel);
+$affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel);
+$affiliateCodeController = new AffiliateCodeController($affiliateCodeModel, $brandModel, $userModel);
+$homeController = new HomeController();
 
-    // 5) Dispatcher la requête
-    switch ($controller) {
-        case 'home':
-            // Gestion de la page d'accueil
-            if (method_exists($homeController, $action)) {
-                $homeController->{$action}();
-            } else {
-                // Action inexistante → 404
-                http_response_code(404);
-                echo "Action « {$action} » introuvable pour le contrôleur Home.";
-            }
-            break;
-        case 'brand':
-            // On garde l'instance $brandController
-            if (method_exists($brandController, $action)) {
-                // Appel dynamique de l'action
-                $brandController->{$action}();
-            } else {
-                // Action inexistante → 404
-                http_response_code(404);
-                echo "Action « {$action} » introuvable pour le contrôleur Brand.";
-            }
-            break;
 
-        case 'user':
-            if (method_exists($userController, $action)) {
-                // Appel dynamique de l'action
-                $userController->{$action}();
-            } else {
-                // Action inexistante → 404
-                http_response_code(404);
-                echo "Action « {$action} » introuvable pour le contrôleur User.";
-            }
-            break;
+// 4) Lire les paramètres de routing
+$controller = isset($_GET['controller']) ? strtolower($_GET['controller']) : 'home';
+$action     = isset($_GET['action'])     ? $_GET['action']           : 'index';
 
-        case 'auth':
-            if (method_exists($authController, $action)) {
-                // Appel dynamique de l'action
-                $authController->{$action}();
-            } else {
-                // Action inexistante → 404
-                http_response_code(404);
-                echo "Action « {$action} » introuvable pour le contrôleur Auth.";
-            }
-            break;
-
-        case 'affiliatelink':
-            if (method_exists($affiliateLinkController, $action)) {
-                // Vérifier si le paramètre ID est nécessaire
-                if ($action === 'delete' || $action === 'edit' || $action === 'show') {
-                    // Ces actions ont besoin d'un ID
-                    $id = isset($_GET['id']) ? $_GET['id'] : null;
-                    if ($id === null) {
-                        echo "Erreur: ID manquant pour l'action $action";
-                        exit;
-                    }
-                    $affiliateLinkController->{$action}($id);
-                } else {
-                    $affiliateLinkController->{$action}();
-                }
-            } else {
-                http_response_code(404);
-                echo "Action « {$action} » introuvable pour le contrôleur AffiliateLink.";
-            }
-            break;
-        default:
-            // Contrôleur inconnu → 404
+// 5) Dispatcher la requête
+switch ($controller) {
+    case 'home':
+        // Gestion de la page d'accueil
+        if (method_exists($homeController, $action)) {
+            $homeController->{$action}();
+        } else {
+            // Action inexistante → 404
             http_response_code(404);
-            echo "Contrôleur « {$controller} » introuvable.";
-            break;
-    }
+            echo "Action « {$action} » introuvable pour le contrôleur Home.";
+        }
+        break;
+    case 'brand':
+        // On garde l'instance $brandController
+        if (method_exists($brandController, $action)) {
+            // Appel dynamique de l'action
+            $brandController->{$action}();
+        } else {
+            // Action inexistante → 404
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur Brand.";
+        }
+        break;
+
+    case 'user':
+        if (method_exists($userController, $action)) {
+            // Appel dynamique de l'action
+            $userController->{$action}();
+        } else {
+            // Action inexistante → 404
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur User.";
+        }
+        break;
+
+    case 'auth':
+        if (method_exists($authController, $action)) {
+            // Appel dynamique de l'action
+            $authController->{$action}();
+        } else {
+            // Action inexistante → 404
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur Auth.";
+        }
+        break;
+
+    case 'affiliatelink':
+        if (method_exists($affiliateLinkController, $action)) {
+            // Vérifier si le paramètre ID est nécessaire
+            if ($action === 'delete' || $action === 'edit' || $action === 'show') {
+                // Ces actions ont besoin d'un ID
+                $id = isset($_GET['id']) ? $_GET['id'] : null;
+                if ($id === null) {
+                    echo "Erreur: ID manquant pour l'action $action";
+                    exit;
+                }
+                $affiliateLinkController->{$action}($id);
+            } else {
+                $affiliateLinkController->{$action}();
+            }
+        } else {
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur AffiliateLink.";
+        }
+        break;
+
+    case 'affiliatecode':
+        if (method_exists($affiliateCodeController, $action)) {
+            // Vérifier si le paramètre ID est nécessaire
+            if ($action === 'delete' || $action === 'edit' || $action === 'show' || $action === 'update') {
+                // Ces actions ont besoin d'un ID
+                $id = isset($_GET['id']) ? $_GET['id'] : null;
+                if ($id === null) {
+                    echo "Erreur: ID manquant pour l'action $action";
+                    exit;
+                }
+                $affiliateCodeController->{$action}($id);
+            } else {
+                $affiliateCodeController->{$action}();
+            }
+        } else {
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur AffiliateCode.";
+        }
+        break;
+    default:
+        // Contrôleur inconnu → 404
+        http_response_code(404);
+        echo "Contrôleur « {$controller} » introuvable.";
+        break;
+}

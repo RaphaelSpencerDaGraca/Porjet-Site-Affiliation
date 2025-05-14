@@ -60,6 +60,47 @@
         <?php unset($_SESSION['errors']); ?>
     <?php endif; ?>
 
+    <!-- Formulaire d'édition de code - Apparaît uniquement lorsqu'on édite un code -->
+    <?php if (isset($codeToEdit) && $codeToEdit): ?>
+        <div id="edit-code-modal" class="affiliate-form-container" style="display: block;">
+            <div class="affiliate-form">
+                <h3>Modifier le code de parrainage</h3>
+
+                <form action="index.php?controller=affiliateCode&action=update&id=<?php echo $codeToEdit['id']; ?>" method="post">
+                    <!-- Champ caché pour passer l'ID du code -->
+                    <input type="hidden" name="code_id" value="<?php echo $codeToEdit['id']; ?>">
+
+                    <div class="form-group">
+                        <label for="brand_edit">Marque</label>
+                        <input type="text" id="brand_edit" value="<?php echo isset($brandForCode) && isset($brandForCode['name']) ? htmlspecialchars($brandForCode['name']) : 'Marque inconnue'; ?>" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="code_edit">Code promo</label>
+                        <input type="text" id="code_edit" name="code" value="<?php echo htmlspecialchars($codeToEdit['code']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiry_date_edit">Date d'expiration (optionnel)</label>
+                        <input type="date" id="expiry_date_edit" name="expiry_date" value="<?php echo !empty($codeToEdit['expiry_date']) ? date('Y-m-d', strtotime($codeToEdit['expiry_date'])) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_active" <?php echo isset($codeToEdit['is_active']) && $codeToEdit['is_active'] ? 'checked' : ''; ?>>
+                            Code actif
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="index.php?controller=user&action=profile" class="button cancel-btn">Annuler</a>
+                        <button type="submit" class="button-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <div class="main-content">
         <div class="profile-section">
             <h1>Mon profil</h1>
@@ -159,7 +200,7 @@
                         </form>
 
                         <!-- Formulaire de code promo -->
-                        <form id="code-form" action="index.php?controller=affiliateLink&action=store" method="post" class="tab-pane">
+                        <form id="code-form" action="index.php?controller=affiliateCode&action=store" method="post" class="tab-pane">
                             <div class="form-group">
                                 <label for="brand_id_code">Marque</label>
                                 <select id="brand_id_code" name="brand_id" required>
@@ -193,80 +234,127 @@
                 </div>
             </div>
 
-            <?php if(empty($links)): ?>
+            <?php if(empty($links) && empty($codes)): ?>
                 <div style="text-align: center; padding: 30px 0;">
-                    <p>Vous n'avez pas encore de liens de parrainage.</p>
-                    <p>Commencez par ajouter votre premier lien de parrainage en cliquant sur le bouton ci-dessus.</p>
+                    <p>Vous n'avez pas encore de liens ou codes de parrainage.</p>
+                    <p>Commencez par ajouter votre premier lien ou code de parrainage en cliquant sur le bouton ci-dessus.</p>
                 </div>
             <?php else: ?>
-                <?php foreach($links as $link): ?>
-                    <div class="affiliate-card">
-                        <div class="affiliate-info">
-                            <div class="brand-logo">
-                                <?php if(!empty($link['logo_url']) && file_exists($link['logo_url'])): ?>
-                                    <img src="<?php echo htmlspecialchars($link['logo_url']); ?>" alt="<?php echo htmlspecialchars($link['brand_name']); ?>">
-                                <?php else: ?>
-                                    <div style="width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background-color: #f5f5f5; font-size: 24px; font-weight: bold;">
-                                        <?php echo htmlspecialchars(substr($link['brand_name'], 0, 1)); ?>
+                <!-- Affichage des liens d'affiliation -->
+                <?php if(!empty($links)): ?>
+                    <h3>Mes liens de parrainage</h3>
+                    <?php foreach($links as $link): ?>
+                        <div class="affiliate-card">
+                            <div class="affiliate-info">
+                                <div class="brand-logo">
+                                    <?php if(!empty($link['logo_url']) && file_exists($link['logo_url'])): ?>
+                                        <img src="<?php echo htmlspecialchars($link['logo_url']); ?>" alt="<?php echo htmlspecialchars($link['brand_name']); ?>">
+                                    <?php else: ?>
+                                        <div style="width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background-color: #f5f5f5; font-size: 24px; font-weight: bold;">
+                                            <?php echo htmlspecialchars(substr($link['brand_name'], 0, 1)); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="affiliate-details">
+                                    <h3><?php echo htmlspecialchars($link['brand_name']); ?></h3>
+                                    <?php if(!empty($link['custom_link'])): ?>
+                                        <p><strong>Lien:</strong>
+                                            <a href="<?php echo htmlspecialchars($link['custom_link']); ?>" target="_blank" style="word-break: break-all;">
+                                                <?php echo htmlspecialchars($link['custom_link']); ?>
+                                            </a>
+                                        </p>
+                                    <?php endif; ?>
+                                    <p>
+                                        <strong>Statut:</strong>
+                                        <?php if($link['is_active']): ?>
+                                            <span style="color: green;">Actif</span>
+                                        <?php else: ?>
+                                            <span style="color: red;">Inactif</span>
+                                        <?php endif; ?>
+                                    </p>
+                                    <?php if(!empty($link['expiry_date'])): ?>
+                                        <p><strong>Expire le:</strong> <?php echo date('d/m/Y', strtotime($link['expiry_date'])); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="affiliate-stats">
+                                <div class="stat">
+                                    <strong>X consultations</strong>
+                                </div>
+                                <?php if(!empty($link['bonus'])): ?>
+                                    <div class="stat">
+                                        <strong>Bonus:</strong> <?php echo htmlspecialchars($link['bonus']); ?>€
                                     </div>
                                 <?php endif; ?>
-                            </div>
-                            <div class="affiliate-details">
-                                <h3><?php echo htmlspecialchars($link['brand_name']); ?></h3>
-                                <?php if(!empty($link['code'])): ?>
-                                    <p><strong>Code:</strong> <span style="background-color: #f5f5f5; padding: 3px 6px; border-radius: 4px;"><?php echo htmlspecialchars($link['code']); ?></span></p>
-                                <?php endif; ?>
-                                <?php if(!empty($link['custom_link'])): ?>
-                                    <p><strong>Lien:</strong>
-                                        <a href="<?php echo htmlspecialchars($link['custom_link']); ?>" target="_blank" style="word-break: break-all;">
-                                            <?php echo htmlspecialchars($link['custom_link']); ?>
-                                        </a>
-                                    </p>
-                                <?php endif; ?>
-                                <p>
-                                    <strong>Statut:</strong>
-                                    <?php if($link['is_active']): ?>
-                                        <span style="color: green;">Actif</span>
-                                    <?php else: ?>
-                                        <span style="color: red;">Inactif</span>
-                                    <?php endif; ?>
-                                </p>
-                                <?php if(!empty($link['expiry_date'])): ?>
-                                    <p><strong>Expire le:</strong> <?php echo date('d/m/Y', strtotime($link['expiry_date'])); ?></p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <div class="affiliate-stats">
-                            <div class="stat">
-                                <strong>X consultations</strong>
-                            </div>
-                            <?php if(!empty($link['bonus'])): ?>
                                 <div class="stat">
-                                    <strong>Bonus:</strong> <?php echo htmlspecialchars($link['bonus']); ?>€
+                                    <strong>Créé le:</strong> <?php echo date('d/m/Y', strtotime($link['created_at'])); ?>
                                 </div>
-                            <?php endif; ?>
-                            <div class="stat">
-                                <strong>Créé le:</strong> <?php echo date('d/m/Y', strtotime($link['created_at'])); ?>
+                            </div>
+
+                            <div class="affiliate-actions">
+                                <button onclick="location.href='index.php?controller=affiliateLink&action=edit&id=<?php echo $link['id']; ?>'">Modifier</button>
+                                <button onclick="copyToClipboard('<?php echo htmlspecialchars($link['custom_link']); ?>')">Copier le lien</button>
+                                <button onclick="location.href='index.php?controller=affiliateLink&action=delete&id=<?php echo $link['id']; ?>'" class="button-danger">Supprimer</button>
                             </div>
                         </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
 
-                        <div class="affiliate-actions">
-                            <button onclick="location.href='index.php?controller=affiliateLink&action=edit&id=<?php echo $link['id']; ?>'">Modifier</button>
-                            <button onclick="copyToClipboard('<?php echo !empty($link['custom_link']) ? htmlspecialchars($link['custom_link']) : htmlspecialchars($link['code']); ?>')">Copier le lien/code</button>
-                            <button onclick="location.href='index.php?controller=affiliateLink&action=delete&id=<?php echo $link['id']; ?>'" class="button-primary">Supprimer</button>
+                <!-- Affichage des codes d'affiliation - MAINTENANT INDÉPENDANT de l'affichage des liens -->
+                <?php if(!empty($codes)): ?>
+                    <h3>Mes codes promo</h3>
+                    <?php foreach($codes as $code): ?>
+                        <div class="affiliate-card">
+                            <div class="affiliate-info">
+                                <div class="brand-logo">
+                                    <?php if(!empty($code['logo_url']) && file_exists($code['logo_url'])): ?>
+                                        <img src="<?php echo htmlspecialchars($code['logo_url']); ?>" alt="<?php echo htmlspecialchars($code['brand_name']); ?>">
+                                    <?php else: ?>
+                                        <div style="width: 80px; height: 80px; display: flex; justify-content: center; align-items: center; background-color: #f5f5f5; font-size: 24px; font-weight: bold;">
+                                            <?php echo htmlspecialchars(substr($code['brand_name'] ?? '?', 0, 1)); ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="affiliate-details">
+                                    <h3><?php echo htmlspecialchars($code['brand_name'] ?? 'Marque inconnue'); ?></h3>
+                                    <p><strong>Code:</strong> <span style="background-color: #f5f5f5; padding: 3px 6px; border-radius: 4px;"><?php echo htmlspecialchars($code['code']); ?></span></p>
+                                    <p>
+                                        <strong>Statut:</strong>
+                                        <?php if(isset($code['is_active']) && $code['is_active']): ?>
+                                            <span style="color: green;">Actif</span>
+                                        <?php else: ?>
+                                            <span style="color: red;">Inactif</span>
+                                        <?php endif; ?>
+                                    </p>
+                                    <?php if(!empty($code['expiry_date'])): ?>
+                                        <p><strong>Expire le:</strong> <?php echo date('d/m/Y', strtotime($code['expiry_date'])); ?></p>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="affiliate-stats">
+                                <div class="stat">
+                                    <strong>X utilisations</strong>
+                                </div>
+                                <?php if(!empty($code['bonus'])): ?>
+                                    <div class="stat">
+                                        <strong>Bonus:</strong> <?php echo htmlspecialchars($code['bonus']); ?>€
+                                    </div>
+                                <?php endif; ?>
+                                <div class="stat">
+                                    <strong>Créé le:</strong> <?php echo isset($code['created_at']) ? date('d/m/Y', strtotime($code['created_at'])) : 'Date inconnue'; ?>
+                                </div>
+                            </div>
+
+                            <div class="affiliate-actions">
+                                <!-- Bouton modifier mis à jour pour utiliser le paramètre edit_code -->
+                                <button onclick="location.href='index.php?controller=user&action=profile&edit_code=<?php echo $code['id']; ?>'">Modifier</button>
+                                <button onclick="copyToClipboard('<?php echo htmlspecialchars($code['code']); ?>')">Copier le code</button>
+                                <button onclick="location.href='index.php?controller=affiliateCode&action=delete&id=<?php echo $code['id']; ?>'" class="button-danger">Supprimer</button>
+                            </div>
                         </div>
-                    </div>
-                <?php endforeach; ?>
-
-                <!-- Pagination - à implémenter si nécessaire -->
-                <?php if(count($links) > 10): ?>
-                    <div class="pagination">
-                        <div class="page-number active">1</div>
-                        <div class="page-number">2</div>
-                        <div class="page-number">3</div>
-                        <div class="page-number">›</div>
-                    </div>
+                    <?php endforeach; ?>
                 <?php endif; ?>
             <?php endif; ?>
         </div>
@@ -274,5 +362,83 @@
 </div>
 
 <script src="../js/profil.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Si la page est chargée avec un paramètre edit_code, faire défiler jusqu'au formulaire d'édition
+        <?php if (isset($codeToEdit) && $codeToEdit): ?>
+        const editForm = document.getElementById('edit-code-modal');
+        if (editForm) {
+            editForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        <?php endif; ?>
+
+        // Fonction pour copier le texte dans le presse-papier
+        window.copyToClipboard = function(text) {
+            const textarea = document.createElement('textarea');
+            textarea.textContent = text;
+            textarea.style.position = 'fixed';
+            document.body.appendChild(textarea);
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                alert('Copié dans le presse-papier !');
+            } catch (err) {
+                console.error('Impossible de copier le texte:', err);
+                alert('Impossible de copier le texte. Veuillez réessayer.');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        };
+
+        // Gestionnaires pour le formulaire d'ajout
+        const showFormBtn = document.getElementById('show-affiliate-form-btn');
+        const formContainer = document.getElementById('affiliate-form-container');
+        const cancelLinkBtn = document.getElementById('cancel-link-form');
+        const cancelCodeBtn = document.getElementById('cancel-code-form');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        if (showFormBtn && formContainer) {
+            showFormBtn.addEventListener('click', function() {
+                formContainer.style.display = 'block';
+                formContainer.scrollIntoView({ behavior: 'smooth' });
+            });
+        }
+
+        if (cancelLinkBtn) {
+            cancelLinkBtn.addEventListener('click', function() {
+                formContainer.style.display = 'none';
+            });
+        }
+
+        if (cancelCodeBtn) {
+            cancelCodeBtn.addEventListener('click', function() {
+                formContainer.style.display = 'none';
+            });
+        }
+
+        // Gestion des onglets
+        tabBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+
+                // Enlever la classe active de tous les onglets
+                tabBtns.forEach(function(btn) {
+                    btn.classList.remove('active');
+                });
+
+                // Cacher tous les contenus d'onglet
+                tabPanes.forEach(function(pane) {
+                    pane.classList.remove('active');
+                });
+
+                // Activer l'onglet cliqué
+                this.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+    });
+</script>
 </body>
 </html>
