@@ -15,7 +15,9 @@
   <header>
     <h1>Affiliagram</h1>
     <div class="lien-compte">
-      <img src="../img/account.png" alt="">
+      <a href="index.php?controller=user&action=profile">
+        <img src="../img/account.png" alt="">
+      </a>
     </div>
   </header>
 
@@ -26,7 +28,7 @@
       <strong><label for="recherche">Rechercher :</label></strong>
       <input type="text" name="recherche" id="recherche">
     </div>
-    
+
     <ul id="liste-sites">
       <?php foreach ($brands as $brand): ?>
         <li>

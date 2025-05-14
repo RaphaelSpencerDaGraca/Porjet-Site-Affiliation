@@ -18,7 +18,9 @@
     <header>
         <h1>Affiliagram</h1>
         <div class="lien-compte">
-            <img src="../img/account.png" alt="Compte utilisateur">
+            <a href="index.php?controller=user&action=profile">
+                <img src="../img/account.png" alt="">
+            </a>
         </div>
     </header>
 
