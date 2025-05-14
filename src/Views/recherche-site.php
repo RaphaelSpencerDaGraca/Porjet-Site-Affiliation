@@ -26,9 +26,7 @@
       <strong><label for="recherche">Rechercher :</label></strong>
       <input type="text" name="recherche" id="recherche">
     </div>
-
-    <hr>
-
+    
     <ul id="liste-sites">
       <?php foreach ($brands as $brand): ?>
         <li>
