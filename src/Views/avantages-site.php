@@ -40,7 +40,7 @@
                        Codes disponibles: <span><?= count($codes) ?></span>
                     </p>    
                     <strong>Avantages filleul</strong>
-                    <p><?= nl2br(htmlspecialchars($brand['description'], ENT_QUOTES, 'UTF-8')) ?></p>
+                    <p><?= nl2br(htmlspecialchars($brand['description_bonus'], ENT_QUOTES, 'UTF-8')) ?></p>
                     <?php if (!empty($brand['website_url'])): ?>
                         <p>
                             <a
