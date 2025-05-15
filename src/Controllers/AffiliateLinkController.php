@@ -1,21 +1,20 @@
 <?php
+
 /**
- * Contrôleur pour la gestion des utilisateurs
+ * Contrôleur pour la gestion des liens d'affiliation
  */
-class UserController {
-    private $userModel;
+class AffiliateLinkController {
     private $affiliateLinkModel;
-    private $affiliateCodeModel;
     private $brandModel;
+    private $userModel;
 
     /**
      * Constructeur - initialise les modèles
      */
-    public function __construct($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel) {
-        $this->userModel = $userModel;
+    public function __construct($affiliateLinkModel, $brandModel, $userModel) {
         $this->affiliateLinkModel = $affiliateLinkModel;
-        $this->affiliateCodeModel = $affiliateCodeModel;
         $this->brandModel = $brandModel;
+        $this->userModel = $userModel;
     }
 
     /**
@@ -30,150 +29,212 @@ class UserController {
     }
 
     /**
-     * Affiche la page de profil de l'utilisateur connecté
+     * Vérifie si l'utilisateur est administrateur
      */
-    public function profile() {
-        $this->checkAuth();
-
-        $userId = $_SESSION['user']['id'];
-
-        // S'assurer que l'utilisateur est toujours correctement récupéré
-        $user = $this->userModel->findById($userId);
-
-        // Vérification supplémentaire - Si $user est null ou vide, utiliser les données de la session
-        if (!$user) {
-            $user = [
-                'id' => $userId,
-                'pseudo' => $_SESSION['user']['pseudo'] ?? 'Utilisateur',
-                'email' => $_SESSION['user']['email'] ?? '',
-                'profile_picture' => ''
-            ];
-
-            // Journaliser l'erreur pour débogage
-            error_log("ERREUR: Impossible de récupérer l'utilisateur ID: $userId");
+    private function checkAdmin() {
+        if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
+            $_SESSION['error'] = "Accès refusé. Vous devez être administrateur pour accéder à cette page.";
+            header('Location: index.php');
+            exit;
         }
-
-        // Récupération des liens d'affiliation
-        $links = $this->affiliateLinkModel->findByUserId($userId) ?: [];
-
-        // Récupération des codes d'affiliation
-        $codes = $this->affiliateCodeModel->findByUserId($userId) ?: [];
-
-        // Récupération des marques actives pour le formulaire
-        $brands = $this->brandModel->findActive() ?: [];
-
-        // Initialiser les variables pour l'édition
-        $codeToEdit = null;
-        $brandForCode = null;
-
-        // Si on demande l'édition d'un code, récupérer les détails du code et de sa marque
-        $editCodeId = isset($_GET['edit_code']) ? (int)$_GET['edit_code'] : null;
-
-        if ($editCodeId) {
-            $codeToEdit = $this->affiliateCodeModel->findById($editCodeId);
-
-            if ($codeToEdit && $codeToEdit['user_id'] == $userId) {
-                // Récupérer les informations de la marque associée au code
-                $brandForCode = $this->brandModel->findById($codeToEdit['brand_id']);
-
-                // Si la marque n'est pas trouvée, créer un tableau vide avec un nom par défaut
-                if (!$brandForCode) {
-                    $brandForCode = ['name' => 'Marque inconnue'];
-                }
-            } else {
-                // Réinitialiser si le code n'appartient pas à l'utilisateur ou n'existe pas
-                $codeToEdit = null;
-                $brandForCode = null;
-            }
-        }
-
-        // Inclusion de la vue
-        include __DIR__ . '/../Views/profile.php';
     }
 
     /**
-     * Met à jour les informations du profil utilisateur
+     * Affiche la liste des liens d'affiliation de l'utilisateur connecté
      */
-    public function updateProfile() {
+    public function index() {
         $this->checkAuth();
 
         $userId = $_SESSION['user']['id'];
-        $user = $this->userModel->findById($userId);
+        $links = $this->affiliateLinkModel->findByUserId($userId);
 
-        $pseudo = $_POST['pseudo'] ?? '';
-        $email = $_POST['email'] ?? '';
-        $currentPassword = $_POST['current_password'] ?? '';
-        $newPassword = $_POST['new_password'] ?? '';
-        $confirmPassword = $_POST['confirm_password'] ?? '';
+        // Rediriger vers la page de profil
+        header('Location: index.php?controller=user&action=profile');
+        exit;
+    }
+
+    /**
+     * Affiche les détails d'un lien d'affiliation
+     */
+    public function show($id) {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $link = $this->affiliateLinkModel->findById($id);
+
+        if (!$link) {
+            $_SESSION['error'] = "Lien d'affiliation non trouvé.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+        // Vérifier que le lien appartient à l'utilisateur ou que l'utilisateur est admin
+        if ($link['user_id'] != $userId && $_SESSION['user']['role'] !== 'admin') {
+            $_SESSION['error'] = "Vous n'avez pas accès à ce lien d'affiliation.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+        // Rediriger vers la page de profil
+        header('Location: index.php?controller=user&action=profile');
+        exit;
+    }
+
+    /**
+     * Traite la soumission du formulaire de création
+     */
+    public function store() {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $brandId = $_POST['brand_id'] ?? '';
+        $customLink = $_POST['custom_link'] ?? '';
+        $expiryDate = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
 
         // Validation
         $errors = [];
+        if (empty($brandId)) $errors[] = "Vous devez sélectionner une marque.";
 
-        if (empty($pseudo)) {
-            $errors[] = "Le pseudo est requis.";
-        }
-
-        if (empty($email)) {
-            $errors[] = "L'email est requis.";
-        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $errors[] = "L'email n'est pas valide.";
-        }
-
-        // Vérifier si l'email est déjà utilisé par un autre utilisateur
-        if ($email !== $user['email']) {
-            $existingUser = $this->userModel->findByEmail($email);
-            if ($existingUser && $existingUser['id'] != $userId) {
-                $errors[] = "Cet email est déjà utilisé par un autre utilisateur.";
+        // Vérifier que la marque existe et est active
+        if (!empty($brandId)) {
+            $brand = $this->brandModel->findById($brandId);
+            if (!$brand || !$brand['is_active']) {
+                $errors[] = "La marque sélectionnée n'est pas disponible.";
             }
         }
 
-        // Vérifier le mot de passe actuel
-        if (!empty($currentPassword) || !empty($newPassword) || !empty($confirmPassword)) {
-            if (empty($currentPassword)) {
-                $errors[] = "Le mot de passe actuel est requis pour effectuer des modifications.";
-            } elseif (!password_verify($currentPassword, $user['password'])) {
-                $errors[] = "Le mot de passe actuel est incorrect.";
-            }
-
-            // Vérifier le nouveau mot de passe
-            if (!empty($newPassword)) {
-                if (strlen($newPassword) < 8) {
-                    $errors[] = "Le nouveau mot de passe doit contenir au moins 8 caractères.";
-                }
-
-                if ($newPassword !== $confirmPassword) {
-                    $errors[] = "Les nouveaux mots de passe ne correspondent pas.";
-                }
-            }
+        // Vérifier si un lien existe déjà pour cet utilisateur et cette marque
+        if ($this->affiliateLinkModel->exists($userId, $brandId)) {
+            $errors[] = "Vous avez déjà un lien d'affiliation pour cette marque.";
         }
 
         if (!empty($errors)) {
             $_SESSION['errors'] = $errors;
+            $_SESSION['form_data'] = $_POST;
             header('Location: index.php?controller=user&action=profile');
             exit;
         }
 
-        // Mise à jour des données
-        $userData = [
-            'pseudo' => $pseudo,
-            'email' => $email
+
+        $linkData = [
+            'user_id' => $userId,
+            'brand_id' => $brandId,
+            'custom_link' => $customLink,
+            'expiry_date' => $expiryDate
         ];
 
-        // Mise à jour du mot de passe si nécessaire
-        if (!empty($newPassword)) {
-            $userData['password'] = password_hash($newPassword, PASSWORD_DEFAULT);
+        $linkId = $this->affiliateLinkModel->create($linkData);
+
+        if ($linkId) {
+            $_SESSION['success'] = "Lien d'affiliation créé avec succès.";
+
+            // Correction: rediriger vers le profil via UserController pour s'assurer que $user est défini
+            header('Location: index.php?controller=user&action=profile');
+        } else {
+            $_SESSION['error'] = "Erreur lors de la création du lien d'affiliation.";
+            header('Location: index.php?controller=user&action=profile');
+        }
+        exit;
+    }
+
+    /**
+     * Affiche le formulaire d'édition d'un lien d'affiliation
+     */
+    public function edit($id) {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $link = $this->affiliateLinkModel->findById($id);
+
+        if (!$link) {
+            $_SESSION['error'] = "Lien d'affiliation non trouvé.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
         }
 
-        $updated = $this->userModel->update($userId, $userData);
+        // Vérifier que le lien appartient à l'utilisateur ou que l'utilisateur est admin
+        if ($link['user_id'] != $userId && $_SESSION['user']['role'] !== 'admin') {
+            $_SESSION['error'] = "Vous n'avez pas accès à ce lien d'affiliation.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+        // Rediriger vers la page de profil avec l'ID du lien à éditer
+        header('Location: index.php?controller=user&action=profile&edit_link=' . $id);
+        exit;
+    }
+
+    /**
+     * Traite la soumission du formulaire d'édition
+     */
+    public function update($id) {
+        $this->checkAuth();
+
+        $userId = $_SESSION['user']['id'];
+        $link = $this->affiliateLinkModel->findById($id);
+
+        if (!$link) {
+            $_SESSION['error'] = "Lien d'affiliation non trouvé.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+
+        if ($link['user_id'] != $userId && $_SESSION['user']['role'] !== 'admin') {
+            $_SESSION['error'] = "Vous n'avez pas accès à ce lien d'affiliation.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+        $customLink = $_POST['custom_link'] ?? '';
+        $expiryDate = !empty($_POST['expiry_date']) ? $_POST['expiry_date'] : null;
+        $isActive = isset($_POST['is_active']) ? 1 : 0;
+
+
+        $linkData = [
+            'custom_link' => $customLink,
+            'expiry_date' => $expiryDate,
+            'is_active' => $isActive
+        ];
+
+        $updated = $this->affiliateLinkModel->update($id, $linkData);
 
         if ($updated) {
-            // Mettre à jour la session avec les nouvelles informations
-            $_SESSION['user']['pseudo'] = $pseudo;
-            $_SESSION['user']['email'] = $email;
-
-            $_SESSION['success'] = "Votre profil a été mis à jour avec succès.";
+            $_SESSION['success'] = "Lien d'affiliation mis à jour avec succès.";
+            header('Location: index.php?controller=user&action=profile');
         } else {
-            $_SESSION['error'] = "Une erreur est survenue lors de la mise à jour de votre profil.";
+            $_SESSION['error'] = "Erreur lors de la mise à jour du lien d'affiliation.";
+            header('Location: index.php?controller=affiliateLink&action=edit&id=' . $id);
+        }
+        exit;
+    }
+
+    /**
+     * Supprime un lien d'affiliation
+     */
+    public function delete($id)
+    {
+        // Vérifier si l'utilisateur est connecté
+        if (!isset($_SESSION['user'])) {
+            $_SESSION['error'] = "Vous devez être connecté pour effectuer cette action.";
+            header('Location: index.php?controller=auth&action=login');
+            exit;
+        }
+
+        $userId = $_SESSION['user']['id'];
+        $link = $this->affiliateLinkModel->findById($id);
+
+        // Vérifier si le lien existe et appartient à l'utilisateur connecté
+        if (!$link || $link['user_id'] != $userId) {
+            $_SESSION['error'] = "Ce lien d'affiliation n'existe pas ou vous n'avez pas les droits pour le supprimer.";
+            header('Location: index.php?controller=user&action=profile');
+            exit;
+        }
+
+        if ($this->affiliateLinkModel->delete($id)) {
+            $_SESSION['success'] = "Lien d'affiliation supprimé avec succès.";
+        } else {
+            $_SESSION['error'] = "Erreur lors de la suppression du lien d'affiliation.";
         }
 
         header('Location: index.php?controller=user&action=profile');
@@ -181,74 +242,184 @@ class UserController {
     }
 
     /**
-     * Met à jour la photo de profil de l'utilisateur
+     * Affiche tous les liens d'affiliation (admin uniquement)
      */
-    public function editProfilePicture() {
-        $this->checkAuth();
+    public function adminIndex() {
+        $this->checkAdmin();
 
-        $userId = $_SESSION['user']['id'];
 
-        // Vérifier si un fichier a été envoyé
-        if (!isset($_FILES['profile_picture']) || $_FILES['profile_picture']['error'] !== UPLOAD_ERR_OK) {
-            $_SESSION['error'] = "Erreur lors de l'upload de l'image.";
-            header('Location: index.php?controller=user&action=profile');
-            exit;
-        }
+        $brandId = isset($_GET['brand_id']) ? (int)$_GET['brand_id'] : null;
 
-        $file = $_FILES['profile_picture'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-        // Vérifier le type de fichier
-        if (!in_array($file['type'], $allowedTypes)) {
-            $_SESSION['error'] = "Le format de l'image n'est pas accepté. Utilisez JPG, PNG ou GIF.";
-            header('Location: index.php?controller=user&action=profile');
-            exit;
-        }
-
-        // Limiter la taille du fichier (5 Mo)
-        if ($file['size'] > 5 * 1024 * 1024) {
-            $_SESSION['error'] = "L'image est trop volumineuse. Taille maximale: 5 Mo.";
-            header('Location: index.php?controller=user&action=profile');
-            exit;
-        }
-
-        // Créer le dossier de destination s'il n'existe pas
-        $uploadDir = 'uploads/profile_pictures/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        // Générer un nom de fichier unique
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid('profile_') . '.' . $extension;
-        $targetPath = $uploadDir . $fileName;
-
-        // Déplacer le fichier téléchargé
-        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-            // Supprimer l'ancienne image si elle existe
-            $user = $this->userModel->findById($userId);
-            if (!empty($user['profile_picture']) && file_exists($user['profile_picture']) && $user['profile_picture'] != 'uploads/profile_pictures/default.png') {
-                unlink($user['profile_picture']);
-            }
-
-            // Mettre à jour le chemin de l'image dans la base de données
-            $userData = [
-                'profile_picture' => $targetPath
-            ];
-
-            $updated = $this->userModel->update($userId, $userData);
-
-            if ($updated) {
-                $_SESSION['user']['profile_picture'] = $targetPath;
-                $_SESSION['success'] = "Votre photo de profil a été mise à jour avec succès.";
-            } else {
-                $_SESSION['error'] = "Erreur lors de la mise à jour de la photo de profil.";
-            }
+        if ($brandId) {
+            $links = $this->affiliateLinkModel->findByBrandId($brandId);
+            $brand = $this->brandModel->findById($brandId);
+            $pageTitle = "Liens d'affiliation pour la marque " . $brand['name'];
         } else {
-            $_SESSION['error'] = "Erreur lors de l'upload de l'image.";
+
+            $query = "SELECT a.*, u.pseudo as user_pseudo, b.name as brand_name
+                    FROM affiliate_links a
+                    JOIN users u ON a.user_id = u.id
+                    JOIN brands b ON a.brand_id = b.id
+                    ORDER BY a.created_at DESC";
+            $stmt = $this->affiliateLinkModel->getDb()->prepare($query);
+            $stmt->execute();
+            $links = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $pageTitle = "Tous les liens d'affiliation";
         }
 
-        header('Location: index.php?controller=user&action=profile');
+
+        $brands = $this->brandModel->findAll();
+
+        include __DIR__ . '/../Views/admin/affiliate_links/index.php';
+    }
+
+    /**
+     * Vérifie et désactive les liens d'affiliation expirés
+     * Cette méthode peut être appelée par un cron job
+     */
+    public function checkExpired() {
+        $count = $this->affiliateLinkModel->deactivateExpired();
+
+        if (isset($_GET['admin']) && $_GET['admin'] == 1) {
+            $this->checkAdmin();
+            $_SESSION['success'] = "$count liens d'affiliation expirés ont été désactivés.";
+            header('Location: index.php?controller=affiliateLink&action=adminIndex');
+            exit;
+        }
+
+
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'deactivated_count' => $count]);
         exit;
+    }
+
+    /**
+     * Génère des statistiques sur les liens d'affiliation (admin uniquement)
+     */
+    public function statistics() {
+        $this->checkAdmin();
+
+
+        $query = "SELECT b.name as brand_name, COUNT(a.id) as link_count
+                FROM brands b
+                LEFT JOIN affiliate_links a ON b.id = a.brand_id
+                GROUP BY b.id
+                ORDER BY link_count DESC";
+        $stmt = $this->affiliateLinkModel->getDb()->prepare($query);
+        $stmt->execute();
+        $brandStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        $query = "SELECT u.pseudo as user_name, COUNT(a.id) as link_count
+                FROM users u
+                JOIN affiliate_links a ON u.id = a.user_id
+                GROUP BY u.id
+                ORDER BY link_count DESC
+                LIMIT 10";
+        $stmt = $this->affiliateLinkModel->getDb()->prepare($query);
+        $stmt->execute();
+        $userStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        $query = "SELECT 
+                    COUNT(*) as total_links,
+                    SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active_links,
+                    SUM(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) as inactive_links,
+                    COUNT(DISTINCT user_id) as unique_users,
+                    COUNT(DISTINCT brand_id) as unique_brands
+                FROM affiliate_links";
+        $stmt = $this->affiliateLinkModel->getDb()->prepare($query);
+        $stmt->execute();
+        $generalStats = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        include __DIR__ . '/../Views/admin/affiliate_links/statistics.php';
+    }
+
+    /**
+     * Exporte les liens d'affiliation au format CSV (admin uniquement)
+     */
+    public function export() {
+        $this->checkAdmin();
+
+
+        $brandId = isset($_GET['brand_id']) ? (int)$_GET['brand_id'] : null;
+
+        if ($brandId) {
+            $links = $this->affiliateLinkModel->findByBrandId($brandId);
+            $brand = $this->brandModel->findById($brandId);
+            $filename = "liens_affiliation_" . $this->slugify($brand['name']) . "_" . date('Y-m-d') . ".csv";
+        } else {
+            // Récupérer tous les liens d'affiliation avec les noms d'utilisateurs et de marques
+            $query = "SELECT a.*, u.pseudo as user_pseudo, u.email as user_email, b.name as brand_name
+                    FROM affiliate_links a
+                    JOIN users u ON a.user_id = u.id
+                    JOIN brands b ON a.brand_id = b.id
+                    ORDER BY a.created_at DESC";
+            $stmt = $this->affiliateLinkModel->getDb()->prepare($query);
+            $stmt->execute();
+            $links = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $filename = "tous_liens_affiliation_" . date('Y-m-d') . ".csv";
+        }
+
+
+        $output = fopen('php://output', 'w');
+
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+
+        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
+
+
+        fputcsv($output, [
+            'ID',
+            'Utilisateur',
+            'Email',
+            'Marque',
+            'Lien personnalisé',
+            'Date de création',
+            'Date d\'expiration',
+            'Actif'
+        ]);
+
+
+        foreach ($links as $link) {
+            fputcsv($output, [
+                $link['id'],
+                $link['user_pseudo'] ?? '',
+                $link['user_email'] ?? '',
+                $link['brand_name'] ?? '',
+                $link['custom_link'],
+                $link['created_at'],
+                $link['expiry_date'] ?? 'Pas d\'expiration',
+                $link['is_active'] ? 'Oui' : 'Non'
+            ]);
+        }
+
+        fclose($output);
+        exit;
+    }
+
+    /**
+     * Convertit une chaîne en slug (pour les noms de fichiers)
+     */
+    private function slugify($text) {
+        // Remplacer les caractères non alphanumériques par des tirets
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
+
+        // Translittération
+        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
+
+        // Supprimer les caractères indésirables
+        $text = preg_replace('~[^-\w]+~', '', $text);
+
+        // Supprimer les tirets en début et fin
+        $text = trim($text, '-');
+
+        // Convertir en minuscules
+        $text = strtolower($text);
+
+        return $text ?: 'n-a';
     }
 }
