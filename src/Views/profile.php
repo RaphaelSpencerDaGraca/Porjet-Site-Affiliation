@@ -32,7 +32,7 @@
 
 <div class="information">
     <p>Postez un maximum de liens et codes de parrainage pour être mis en avant!</p>
-    <button onclick="window.location.href='index.php?controller=brand&action=searchSite';" class="button-primary"><strong>Je décourvre les liens</strong></button>
+    <button onclick="window.location.href='index.php?controller=brand&action=searchSite';" class="button-primary"><strong>Je découvre les liens</strong></button>
 </div>
 
 <div class="container">
@@ -94,6 +94,46 @@
                         <label>
                             <input type="checkbox" name="is_active" <?php echo isset($codeToEdit['is_active']) && $codeToEdit['is_active'] ? 'checked' : ''; ?>>
                             Code actif
+                        </label>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="index.php?controller=user&action=profile" class="button cancel-btn">Annuler</a>
+                        <button type="submit" class="button-primary">Mettre à jour</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    <?php endif; ?>
+    <!-- Formulaire d'édition de lien - Apparaît uniquement lorsqu'on édite un lien -->
+    <?php if (isset($linkToEdit) && $linkToEdit): ?>
+        <div id="edit-link-modal" class="affiliate-form-container" style="display: block;">
+            <div class="affiliate-form">
+                <h3>Modifier le lien de parrainage</h3>
+
+                <form action="index.php?controller=affiliateLink&action=update&id=<?php echo $linkToEdit['id']; ?>" method="post">
+                    <!-- Champ caché pour passer l'ID du lien -->
+                    <input type="hidden" name="link_id" value="<?php echo $linkToEdit['id']; ?>">
+
+                    <div class="form-group">
+                        <label for="brand_edit_link">Marque</label>
+                        <input type="text" id="brand_edit_link" value="<?php echo isset($brandForLink) && isset($brandForLink['name']) ? htmlspecialchars($brandForLink['name']) : 'Marque inconnue'; ?>" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="custom_link_edit">Lien de parrainage</label>
+                        <input type="url" id="custom_link_edit" name="custom_link" value="<?php echo htmlspecialchars($linkToEdit['custom_link']); ?>" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expiry_date_edit_link">Date d'expiration (optionnel)</label>
+                        <input type="date" id="expiry_date_edit_link" name="expiry_date" value="<?php echo !empty($linkToEdit['expiry_date']) ? date('Y-m-d', strtotime($linkToEdit['expiry_date'])) : ''; ?>">
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="is_active" <?php echo isset($linkToEdit['is_active']) && $linkToEdit['is_active'] ? 'checked' : ''; ?>>
+                            Lien actif
                         </label>
                     </div>
 
@@ -368,6 +408,21 @@
 
 <script src="../js/profil.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Si la page est chargée avec un paramètre edit_code ou edit_link, faire défiler jusqu'au formulaire d'édition
+        <?php if (isset($codeToEdit) && $codeToEdit): ?>
+        const editCodeForm = document.getElementById('edit-code-modal');
+        if (editCodeForm) {
+            editCodeForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        <?php endif; ?>
+
+        <?php if (isset($linkToEdit) && $linkToEdit): ?>
+        const editLinkForm = document.getElementById('edit-link-modal');
+        if (editLinkForm) {
+            editLinkForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        <?php endif; ?>
     document.addEventListener('DOMContentLoaded', function() {
         // Si la page est chargée avec un paramètre edit_code, faire défiler jusqu'au formulaire d'édition
         <?php if (isset($codeToEdit) && $codeToEdit): ?>

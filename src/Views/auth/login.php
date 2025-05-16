@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Connexion - Affiliagram</title>
-    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/login.css"> <!-- Correction du chemin -->
     <!-- Font Awesome pour les icônes -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -37,6 +37,17 @@
                 <?php unset($_SESSION['error']); ?>
             <?php endif; ?>
 
+            <?php if(isset($_SESSION['errors']) && is_array($_SESSION['errors'])): ?>
+                <div class="message error">
+                    <ul>
+                        <?php foreach($_SESSION['errors'] as $error): ?>
+                            <li><?php echo htmlspecialchars($error); ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+                <?php unset($_SESSION['errors']); ?>
+            <?php endif; ?>
+
             <form action="index.php?controller=auth&action=login" method="post">
                 <div class="form-group">
                     <label for="email"><i class="fas fa-envelope"></i> Email</label>
@@ -48,8 +59,15 @@
                     <input type="password" id="password" name="password" placeholder="Entrez votre mot de passe" required>
                 </div>
 
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="remember" id="remember">
+                        Se souvenir de moi
+                    </label>
+                </div>
+
                 <div class="forgot-password-link">
-                    <a href="index.php?controller=user&action=forgotPassword">Mot de passe oublié ?</a>
+                    <a href="index.php?controller=auth&action=forgotPassword">Mot de passe oublié ?</a>
                 </div>
 
                 <button type="submit" class="button-primary">
@@ -112,6 +130,5 @@
     </div>
 </footer>
 
-<script src="../../../js/auth.js"></script>
 </body>
 </html>

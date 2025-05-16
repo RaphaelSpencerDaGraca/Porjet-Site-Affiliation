@@ -75,7 +75,7 @@ class AuthController {
                 $userData = [
                     'pseudo' => $pseudo,
                     'email' => $email,
-                    'password_hash' => $hashedPassword, // Utiliser 'password' selon la structure de la BD
+                    'password_hash' => $hashedPassword,
                     'is_active' => 1, // Actif par défaut
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
@@ -149,7 +149,7 @@ class AuthController {
                 // Récupérer l'utilisateur par son email
                 $user = $this->userModel->findByEmail($email);
 
-                if ($user && password_verify($password, $user['password'])) { // Utiliser 'password' ici aussi
+                if ($user && password_verify($password, $user['password_hash'])) {
                     // Vérifier si le compte est actif
                     if (!$user['is_active']) {
                         $errors[] = "Votre compte n'est pas actif. Veuillez l'activer en cliquant sur le lien dans l'email que nous vous avons envoyé.";

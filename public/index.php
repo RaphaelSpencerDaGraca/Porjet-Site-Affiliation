@@ -89,7 +89,7 @@ switch ($controller) {
     case 'affiliatelink':
         if (method_exists($affiliateLinkController, $action)) {
             // Vérifier si le paramètre ID est nécessaire
-            if ($action === 'delete' || $action === 'edit' || $action === 'show') {
+            if ($action === 'delete' || $action === 'edit' || $action === 'show'||$action === 'update') {
                 // Ces actions ont besoin d'un ID
                 $id = isset($_GET['id']) ? $_GET['id'] : null;
                 if ($id === null) {
