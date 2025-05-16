@@ -423,7 +423,6 @@
             editLinkForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
         <?php endif; ?>
-    document.addEventListener('DOMContentLoaded', function() {
         // Si la page est chargée avec un paramètre edit_code, faire défiler jusqu'au formulaire d'édition
         <?php if (isset($codeToEdit) && $codeToEdit): ?>
         const editForm = document.getElementById('edit-code-modal');
