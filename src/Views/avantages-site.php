@@ -19,7 +19,7 @@
         <h1>Affiliagram</h1>
         <div class="lien-compte">
             <a href="index.php?controller=user&action=profile">
-                <img src="../img/account.png" alt="">
+                <img src="../img/account.png" alt="Compte utilisateur">
             </a>
         </div>
     </header>
@@ -37,10 +37,10 @@
 
                 <div class="info-parrainage">
                     <strong><?= htmlspecialchars($brand['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                    <p>Liens disponibles: <span><?= count($links) ?></span>
-                        <br>
-                       Codes disponibles: <span><?= count($codes) ?></span>
-                    </p>    
+                    <p>
+                        Liens disponibles : <span><?= count($links) ?></span><br>
+                        Codes disponibles : <span><?= count($codes) ?></span>
+                    </p>
                     <strong>Avantages filleul</strong>
                     <p><?= nl2br(htmlspecialchars($brand['description_bonus'], ENT_QUOTES, 'UTF-8')) ?></p>
                     <?php if (!empty($brand['website_url'])): ?>
@@ -73,43 +73,55 @@
 
         <hr class="barre">
 
+        <!-- Liste des liens -->
         <ul id="liste-liens">
-      <?php if (!empty($links)): ?>
-        <?php foreach ($links as $link): ?>
-          <li>
-            <img src="../img/account.png" alt="">
-            <div>
-              <div class="specs-user">
-                <strong><?= htmlspecialchars($link['pseudo'], ENT_QUOTES) ?></strong>
-              </div>
-              <button onclick="window.open('<?= htmlspecialchars($link['custom_link'], ENT_QUOTES) ?>','_blank')">
-                Vers le site
-              </button>
-            </div>
-          </li>
-        <?php endforeach; ?>
-      <?php else: ?>
-        <li>Aucun lien disponible.</li>
-      <?php endif; ?>
-    </ul>
+            <?php if (!empty($links)): ?>
+                <?php foreach ($links as $link): ?>
+                    <li class="item <?= $link['is_boosted'] ? 'boosted' : '' ?>">
+                        <?php if ($link['is_boosted']): ?>
+                            <img src="../img/flamme.png" alt="Boosté" class="flame-icon">
+                        <?php endif; ?>
 
-    <ul id="liste-codes" style="display:none;">
-      <?php if (!empty($codes)): ?>
-        <?php foreach ($codes as $code): ?>
-          <li>
-            <img src="../img/account.png" alt="">
-            <div>
-              <div class="specs-user">
-                <strong><?= htmlspecialchars($code['pseudo'], ENT_QUOTES) ?></strong>
-              </div>
-              <p class="espace-code"><?= htmlspecialchars($code['code'], ENT_QUOTES) ?></p>
-            </div>
-          </li>
-        <?php endforeach; ?>
-      <?php else: ?>
-        <li>Aucun code disponible.</li>
-      <?php endif; ?>
-    </ul>
+                        <img src="../img/account.png" alt="Avatar" class="user-avatar">
+                        <div>
+                            <div class="specs-user">
+                                <strong><?= htmlspecialchars($link['pseudo'], ENT_QUOTES) ?></strong>
+                            </div>
+                            <button
+                              onclick="window.open('<?= htmlspecialchars($link['custom_link'], ENT_QUOTES) ?>','_blank')"
+                            >
+                                Vers le site
+                            </button>
+                        </div>
+                    </li>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <li>Aucun lien disponible.</li>
+            <?php endif; ?>
+        </ul>
+
+        <!-- Liste des codes -->
+        <ul id="liste-codes" style="display:none;">
+            <?php if (!empty($codes)): ?>
+                <?php foreach ($codes as $code): ?>
+                    <li class="item <?= $code['is_boosted'] ? 'boosted' : '' ?>">
+                        <?php if ($code['is_boosted']): ?>
+                            <img src="../img/flamme.png" alt="Boosté" class="flame-icon">
+                        <?php endif; ?>
+
+                        <img src="../img/account.png" alt="Avatar" class="user-avatar">
+                        <div>
+                            <div class="specs-user">
+                                <strong><?= htmlspecialchars($code['pseudo'], ENT_QUOTES) ?></strong>
+                            </div>
+                            <p class="espace-code"><?= htmlspecialchars($code['code'], ENT_QUOTES) ?></p>
+                        </div>
+                    </li>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <li>Aucun code disponible.</li>
+            <?php endif; ?>
+        </ul>
     </div>
 </body>
 </html>

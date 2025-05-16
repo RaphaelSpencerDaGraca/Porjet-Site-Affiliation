@@ -103,55 +103,61 @@ SQL;
         return $stmt->execute($params);
     }
 
-    /**
-     * Récupère tous les liens (custom_link) valides pour une marque donnée,
-     * triés par le nombre total de contributions (clcount) de l'utilisateur.
-     */
-    public function findLinksByBrandId(int $brandId): array
-    {
-        $sql = <<<'SQL'
+    // Dans BrandModel.php
+
+/**
+ * Récupère tous les liens (custom_link) valides pour une marque donnée.
+ */
+public function findLinksByBrandId(int $brandId): array
+{
+    $sql = <<<'SQL'
 SELECT
     u.pseudo,
     al.custom_link,
-    u.clcount
+    al.is_boosted,
+    al.boost_end_date
 FROM affiliate_links al
-JOIN users u
-  ON u.id = al.user_id
-WHERE al.brand_id    = :brandId
-  AND al.is_active   = 1
+JOIN users u ON u.id = al.user_id
+WHERE al.brand_id   = :brandId
+  AND al.is_active  = 1
   AND al.custom_link IS NOT NULL
   AND al.custom_link <> ''
-ORDER BY u.clcount DESC, al.created_at DESC
+ORDER BY 
+    -- d’abord les boostés (1 devant 0), puis par date de fin de boost (les plus récents en premier)
+    al.is_boosted DESC,
+    al.boost_end_date DESC
 SQL;
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
-    /**
-     * Récupère tous les codes valides pour une marque donnée,
-     * triés par le nombre total de contributions (clcount) de l'utilisateur.
-     */
-    public function findCodesByBrandId(int $brandId): array
-    {
-        $sql = <<<'SQL'
+/**
+ * Récupère tous les codes valides pour une marque donnée.
+ */
+public function findCodesByBrandId(int $brandId): array
+{
+    $sql = <<<'SQL'
 SELECT
     u.pseudo,
     ac.code,
-    u.clcount
+    ac.is_boosted,
+    ac.boost_end_date
 FROM affiliate_codes ac
-JOIN users u
-  ON u.id = ac.user_id
+JOIN users u ON u.id = ac.user_id
 WHERE ac.brand_id  = :brandId
   AND ac.is_active = 1
   AND ac.code IS NOT NULL
   AND ac.code <> ''
-ORDER BY u.clcount DESC, ac.created_at DESC
+ORDER BY
+    ac.is_boosted DESC,
+    ac.boost_end_date DESC
 SQL;
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $stmt = $this->db->prepare($sql);
+    $stmt->bindParam(':brandId', $brandId, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 }
