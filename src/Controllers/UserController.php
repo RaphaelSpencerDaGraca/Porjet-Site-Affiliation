@@ -7,15 +7,17 @@ class UserController {
     private $affiliateLinkModel;
     private $affiliateCodeModel;
     private $brandModel;
+    private $boostModel;
 
     /**
      * Constructeur - initialise les modèles
      */
-    public function __construct($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel) {
+    public function __construct($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel,$boostModel) {
         $this->userModel = $userModel;
         $this->affiliateLinkModel = $affiliateLinkModel;
         $this->affiliateCodeModel = $affiliateCodeModel;
         $this->brandModel = $brandModel;
+        $this->boostModel = $boostModel;
     }
 
     /**
@@ -112,7 +114,8 @@ class UserController {
             }
         }
 
-        // Inclusion de la vue
+        $this->boostModel->updateStatus();
+        $activeBoostCount = $this->boostModel->countActiveByUserId($userId);
         include __DIR__ . '/../Views/profile.php';
     }
 

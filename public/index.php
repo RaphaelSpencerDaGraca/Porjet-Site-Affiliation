@@ -14,12 +14,15 @@ require_once __DIR__ . '/../src/Models/BrandModel.php';
 require_once __DIR__ . '/../src/Models/UserModel.php';
 require_once __DIR__ . '/../src/Models/AffiliateLinkModel.php';
 require_once __DIR__ . '/../src/Models/AffiliateCodeModel.php';
+require_once __DIR__ . '/../src/Models/BoostModel.php';
+
 require_once __DIR__ . '/../src/Controllers/BrandController.php';
 require_once __DIR__ . '/../src/Controllers/UserController.php';
 require_once __DIR__ . '/../src/Controllers/AuthController.php';
 require_once __DIR__ . '/../src/Controllers/AffiliateLinkController.php';
 require_once __DIR__ . '/../src/Controllers/AffiliateCodeController.php';
 require_once __DIR__ . '/../src/Controllers/HomeController.php';
+require_once __DIR__ . '/../src/Controllers/BoostController.php';
 
 
 // 3) Instancier les modèles et les contrôleurs
@@ -27,13 +30,15 @@ $brandModel      = new BrandModel($pdo);
 $userModel       = new UserModel($pdo);
 $affiliateLinkModel = new AffiliateLinkModel($pdo);
 $affiliateCodeModel = new AffiliateCodeModel($pdo);
+$boostModel = new BoostModel($pdo);
+
 $brandController = new BrandController($brandModel);
-// Mise à jour: ajout de $affiliateCodeModel dans le UserController
-$userController  = new UserController($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel);
+$userController  = new UserController($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel,$boostModel);
 $authController  = new AuthController($userModel);
 $affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel);
 $affiliateCodeController = new AffiliateCodeController($affiliateCodeModel, $brandModel, $userModel);
 $homeController = new HomeController();
+$boostController = new BoostController($boostModel, $affiliateLinkModel, $affiliateCodeModel, $userModel,$brandModel);
 
 
 // 4) Lire les paramètres de routing
@@ -129,5 +134,29 @@ switch ($controller) {
         // Contrôleur inconnu → 404
         http_response_code(404);
         echo "Contrôleur « {$controller} » introuvable.";
+        break;
+
+
+    case 'boost':
+        if (method_exists($boostController, $action)) {
+            // Vérifier si des paramètres supplémentaires sont nécessaires
+            if ($action === 'showBoostForm') {
+                $itemType = isset($_GET['item_type']) ? $_GET['item_type'] : '';
+                $itemId = isset($_GET['item_id']) ? $_GET['item_id'] : '';
+                $boostController->showBoostForm($itemType, $itemId);
+            } else if ($action === 'cancel') {
+                $id = isset($_GET['id']) ? $_GET['id'] : null;
+                if ($id === null) {
+                    echo "Erreur: ID manquant pour l'action $action";
+                    exit;
+                }
+                $boostController->cancel($id);
+            } else {
+                $boostController->$action();
+            }
+        } else {
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour le contrôleur Boost.";
+        }
         break;
 }
