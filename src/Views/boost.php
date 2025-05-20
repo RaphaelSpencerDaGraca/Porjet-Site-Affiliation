@@ -95,6 +95,20 @@ $activeBoostCount = isset($activeBoostCount) ? $activeBoostCount : 0;
                     </div>
                 </div>
 
+                <div id="card-details" style="margin-top:20px;">
+                    <label for="card_number">Numéro de carte bancaire :</label><br>
+                    <input type="text" id="card_number" name="card_number" maxlength="19" placeholder="1234 5678 9012 3456" inputmode="numeric"
+                    pattern="[0-9]{13,19}" required><br><br>
+
+                    <label for="expiry_date">Date d'expiration (MM/AA) :</label><br>
+                    <input type="text" id="expiry_date" name="expiry_date" maxlength="5" placeholder="MM/AA" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" required><br><br>
+
+                    <label for="cvc">CVC :</label><br>
+                    <input type="text" id="cvc" name="cvc" maxlength="3" placeholder="123" inputmode="numeric"
+                    pattern="[0-9]{3}" required><br><br>
+                </div>
+
+
                 <div class="action-buttons">
                     <a href="index.php?controller=user&action=profile" class="button button-secondary">Annuler</a>
                     <button type="submit" class="button button-primary">Payer et booster</button>
