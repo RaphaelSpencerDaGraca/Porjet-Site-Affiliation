@@ -261,7 +261,7 @@ class BoostController {
         }
 
         $_SESSION['success'] = "Votre élément a été boosté avec succès pour 7 jours !";
-        header('Location: index.php?controller=user&action=profile');
+        header('Location: index.php?controller=bill&action=generate');
         exit;
     }
 

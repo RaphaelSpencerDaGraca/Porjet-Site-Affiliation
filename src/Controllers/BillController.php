@@ -15,36 +15,48 @@ class BillController
     }
 
     public function generate()
-    {
-        // ✂ on enlève session_start();
-
-        $userId = $_SESSION['user_id'] ?? null;
-        if (!$userId) {
-            http_response_code(403);
-            die('Utilisateur non connecté.');
-        }
-
-        $tx = $this->model->getLastCompletedTransaction($userId);
-        if (!$tx) {
-            die('Aucune transaction valide trouvée.');
-        }
-
-        $boost = !empty($tx['boost_id'])
-            ? $this->model->getBoostDetails((int)$tx['boost_id'])
-            : null;
-
-        ob_start();
-        // ⚠ bien appeler la vue bill_invoice.php si c’est son nom
-        include __DIR__ . '/../Views/bill.php';
-        $html = ob_get_clean();
-
-        $options = new Options();
-        $options->set('defaultFont', 'DejaVu Sans');
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-        $dompdf->stream("facture_{$tx['id']}.pdf", ['Attachment' => false]);
-        exit;
+{
+    // Récupération de l'utilisateur connecté
+    $userId = $_SESSION['user']['id'] ?? null;
+    if (!$userId) {
+        http_response_code(403);
+        die('Utilisateur non connecté.');
     }
+
+    // 1) Récupérer la dernière transaction "completed" de l'utilisateur
+    $tx = $this->model->getLastCompletedTransaction($userId);
+    if (!$tx) {
+        die('Aucune transaction valide trouvée.');
+    }
+
+    // 2) Si boost, récupérer ses détails
+    $boost = null;
+    if (!empty($tx['boost_id'])) {
+        $boost = $this->model->getBoostDetails((int)$tx['boost_id']);
+    }
+
+    // 3) Générer le HTML via la vue
+    ob_start();
+    include __DIR__ . '/../Views/bill.php';  // ou bill.php selon votre nommage
+    $html = ob_get_clean();
+
+    // 4) Configurer Dompdf et rendre le PDF
+    $options = new Options();
+    $options->set('defaultFont', 'DejaVu Sans');
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+
+    // 5) Forcer le téléchargement du PDF
+    $filename = "facture_{$tx['id']}.pdf";
+    $dompdf->stream($filename, [
+        'Attachment' => true
+    ]);
+
+    header('Location: index.php?controller=user&action=profile');
+    
+    exit;
+}
+
 }

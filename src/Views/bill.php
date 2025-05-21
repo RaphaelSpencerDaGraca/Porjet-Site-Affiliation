@@ -1,8 +1,6 @@
 <?php
-// src/Views/bill_invoice.php
-// ATTENTION : ce fichier doit être inclus après avoir défini $tx et $boost
-
-?><!DOCTYPE html>
+?>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -15,12 +13,12 @@
   </style>
 </head>
 <body>
-  <h1>Facture n°<?= htmlspecialchars($tx['id']) ?></h1>
-  <p><strong>Date :</strong> <?= htmlspecialchars($tx['created_at']) ?></p>
+  <h1>Facture n°<?= htmlspecialchars((string) $tx['id']) ?></h1>
+  <p><strong>Date :</strong> <?= htmlspecialchars($tx['created_at'] ?? '') ?></p>
 
-  <h2>Crediteur (vous)</h2>
-  <p><strong>Pseudo :</strong> <?= htmlspecialchars($tx['user_name']) ?></p>
-  <p><strong>Email :</strong> <?= htmlspecialchars($tx['user_email']) ?></p>
+  <h2>Créditeur (vous)</h2>
+  <p><strong>Pseudo :</strong> <?= htmlspecialchars($tx['user_name'] ?? '') ?></p>
+  <p><strong>Email :</strong> <?= htmlspecialchars($tx['user_email'] ?? '') ?></p>
 
   <h2>Bienfaiteur (Affiliagram)</h2>
   <p>Affiliagram SARL<br>123 rue du code<br>75000 Paris</p>
@@ -39,12 +37,13 @@
       <?php if ($boost): ?>
         <tr>
           <td>
-            Boost <?= htmlspecialchars($boost['brand_name']) ?>
-            (<?= htmlspecialchars($boost['item_type']) ?> #<?= $boost['item_id'] ?>)
+            Boost <?= htmlspecialchars($boost['brand_name']   ?? '') ?>
+            (<?= htmlspecialchars($boost['item_type']   ?? '') ?>
+             #<?= htmlspecialchars((string) ($boost['item_id'] ?? '')) ?>)
           </td>
           <td class="right">1</td>
-          <td class="right"><?= number_format($tx['amount'], 2, ',', ' ') ?> €</td>
-          <td class="right"><?= number_format($tx['amount'], 2, ',', ' ') ?> €</td>
+          <td class="right"><?= number_format($tx['amount'] ?? 0, 2, ',', ' ') ?> €</td>
+          <td class="right"><?= number_format($tx['amount'] ?? 0, 2, ',', ' ') ?> €</td>
         </tr>
       <?php else: ?>
         <tr>
@@ -58,18 +57,19 @@
   <table style="width:50%; float:right">
     <tr>
       <td><strong>Sous-total :</strong></td>
-      <td class="right"><?= number_format($tx['amount'], 2, ',', ' ') ?> €</td>
+      <td class="right"><?= number_format($tx['amount'] ?? 0, 2, ',', ' ') ?> €</td>
     </tr>
     <tr>
       <td><strong>TVA (20%) :</strong></td>
       <?php 
-        $tva = $tx['amount'] * 0.20;
-        $ttc = $tx['amount'] + $tva;
+        $base = $tx['amount'] ?? 0;
+        $tva  = $base * 0.20;
       ?>
       <td class="right"><?= number_format($tva, 2, ',', ' ') ?> €</td>
     </tr>
     <tr>
       <td><strong>Total TTC :</strong></td>
+      <?php $ttc = $base + ($base * 0.20); ?>
       <td class="right"><strong><?= number_format($ttc, 2, ',', ' ') ?> €</strong></td>
     </tr>
   </table>
