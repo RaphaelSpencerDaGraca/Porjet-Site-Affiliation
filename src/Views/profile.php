@@ -341,6 +341,25 @@
                                 <button onclick="location.href='index.php?controller=affiliateLink&action=edit&id=<?php echo $link['id']; ?>'">Modifier</button>
                                 <button onclick="copyToClipboard('<?php echo htmlspecialchars($link['custom_link']); ?>')">Copier le lien</button>
                                 <button onclick="location.href='index.php?controller=affiliateLink&action=delete&id=<?php echo $link['id']; ?>'" class="button-danger">Supprimer</button>
+                                <?php
+                                $isLinkBoosted = !empty($link['is_boosted']) && $link['is_boosted'] == 1;
+
+                                // Obtenir le nombre de boosts actifs
+                                $activeBoostCount = 0;
+                                if (isset($boostModel)) {
+                                    $activeBoostCount = $boostModel->countActiveByUserId($_SESSION['user']['id']);
+                                }
+                                // Afficher le bouton Boost si le lien n'est pas déjà boosté et si l'utilisateur a moins de 3 boosts actifs
+                                if (!$isLinkBoosted && $activeBoostCount < 3):
+                                    ?>
+                                    <button onclick="location.href='index.php?controller=boost&action=showBoostForm&item_type=link&item_id=<?php echo $link['id']; ?>'" class="button-boost">
+                                        <i class="fas fa-bolt"></i> Booster
+                                    </button>
+                                <?php elseif ($isLinkBoosted): ?>
+                                    <span class="boost-badge">
+            <i class="fas fa-bolt"></i> Boosté jusqu'au <?php echo date('d/m/Y', strtotime($link['boost_end_date'])); ?>
+        </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -397,6 +416,25 @@
                                 <button onclick="location.href='index.php?controller=user&action=profile&edit_code=<?php echo $code['id']; ?>'">Modifier</button>
                                 <button onclick="copyToClipboard('<?php echo htmlspecialchars($code['code']); ?>')">Copier le code</button>
                                 <button onclick="location.href='index.php?controller=affiliateCode&action=delete&id=<?php echo $code['id']; ?>'" class="button-danger">Supprimer</button>
+                                <?php
+                                $isCodeBoosted = !empty($code['is_boosted']) && $code['is_boosted'] == 1;
+
+                                // Obtenir le nombre de boosts actifs (si ce n'est pas déjà fait)
+                                if (!isset($activeBoostCount) && isset($boostModel)) {
+                                    $activeBoostCount = $boostModel->countActiveByUserId($_SESSION['user']['id']);
+                                }
+
+                                // Afficher le bouton Boost si le code n'est pas déjà boosté et si l'utilisateur a moins de 3 boosts actifs
+                                if (!$isCodeBoosted && $activeBoostCount < 3):
+                                    ?>
+                                    <button onclick="location.href='index.php?controller=boost&action=showBoostForm&item_type=code&item_id=<?php echo $code['id']; ?>'" class="button-boost">
+                                        <i class="fas fa-bolt"></i> Booster
+                                    </button>
+                                <?php elseif ($isCodeBoosted): ?>
+                                    <span class="boost-badge">
+            <i class="fas fa-bolt"></i> Boosté jusqu'au <?php echo date('d/m/Y', strtotime($code['boost_end_date'])); ?>
+        </span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
