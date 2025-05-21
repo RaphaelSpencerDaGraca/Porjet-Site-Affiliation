@@ -105,6 +105,22 @@ switch ($controller) {
             echo "Action « {$action} » introuvable pour le contrôleur AffiliateLink.";
         }
         break;
+    // juste avant le default :
+    case 'bill':
+        if ($action === 'generate') {
+            require_once __DIR__ . '/../src/Models/BillModel.php';
+            require_once __DIR__ . '/../src/Controllers/BillController.php';
+    
+            $billModel      = new BillModel($pdo);
+            $billController = new BillController($billModel);
+            $billController->generate();
+        } else {
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour BillController.";
+        }
+        break;
+    
+
 
     case 'affiliatecode':
         if (method_exists($affiliateCodeController, $action)) {
