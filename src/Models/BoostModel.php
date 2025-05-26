@@ -188,4 +188,20 @@ class BoostModel extends BaseModel {
             return false;
         }
     }
+
+        // src/Models/BoostModel.php
+    public function deleteByItem(string $itemType, int $itemId): bool
+    {
+        try {
+            $sql = "DELETE FROM boosts WHERE item_type = :item_type AND item_id = :item_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->bindParam(':item_type', $itemType, PDO::PARAM_STR);
+            $stmt->bindParam(':item_id',   $itemId,   PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Erreur dans BoostModel::deleteByItem: " . $e->getMessage());
+            return false;
+        }
+    }
+
 }
