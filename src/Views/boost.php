@@ -1,4 +1,6 @@
 <?php
+
+/*id produit stripe = prod_SLYfJyKa1hJG6G*/
 $itemType = isset($itemType) ? $itemType : '';
 $itemId = isset($itemId) ? $itemId : '';
 $itemName = isset($itemName) ? $itemName : '';
@@ -12,8 +14,10 @@ $activeBoostCount = isset($activeBoostCount) ? $activeBoostCount : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booster votre élément - Affiliagram</title>
     <link rel="stylesheet" href="../css/boost.css">
-    <script src="../js/boost.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stripe JS -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="../js/boost.js"></script>
 </head>
 <body>
 <header>
@@ -65,55 +69,146 @@ $activeBoostCount = isset($activeBoostCount) ? $activeBoostCount : 0;
                 </div>
             </div>
 
-            <form action="index.php?controller=boost&action=processBoost" method="post">
-                <input type="hidden" name="item_type" value="<?php echo htmlspecialchars($itemType); ?>">
-                <input type="hidden" name="item_id" value="<?php echo htmlspecialchars($itemId); ?>">
+            <div class="payment-options">
+                <h3>Choisissez votre méthode de paiement</h3>
 
-                <div class="payment-options">
-                    <h3>Choisissez votre méthode de paiement</h3>
+                <div class="payment-method selected" id="card-method">
+                    <input type="radio" id="card" name="payment_method" value="card" checked>
+                    <label for="card">
+                        <div class="icon"><i class="fas fa-credit-card"></i></div>
+                        <div class="details">
+                            <div class="name">Carte bancaire</div>
+                            <div class="description">Paiement sécurisé par carte</div>
+                        </div>
+                    </label>
+                </div>
 
-                    <div class="payment-method selected">
-                        <input type="radio" id="card" name="payment_method" value="card" checked>
-                        <label for="card">
-                            <div class="icon"><i class="fas fa-credit-card"></i></div>
-                            <div class="details">
-                                <div class="name">Carte bancaire</div>
-                                <div class="description">Paiement sécurisé par carte</div>
-                            </div>
-                        </label>
+                <div class="payment-method" id="paypal-method">
+                    <input type="radio" id="paypal" name="payment_method" value="paypal">
+                    <label for="paypal">
+                        <div class="icon"><i class="fab fa-paypal"></i></div>
+                        <div class="details">
+                            <div class="name">PayPal</div>
+                            <div class="description">Paiement via votre compte PayPal</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Formulaire de paiement par carte -->
+            <div id="card-payment-form" class="payment-form">
+                <form id="payment-form">
+                    <div class="card-form-header">
+                        <h4><i class="fas fa-credit-card"></i> Informations de la carte</h4>
                     </div>
 
-                    <div class="payment-method">
-                        <input type="radio" id="paypal" name="payment_method" value="paypal">
-                        <label for="paypal">
-                            <div class="icon"><i class="fab fa-paypal"></i></div>
-                            <div class="details">
-                                <div class="name">PayPal</div>
-                                <div class="description">Paiement via votre compte PayPal</div>
+                    <div class="card-form-grid">
+                        <div class="form-group full-width">
+                            <label for="card-number">Numéro de carte</label>
+                            <div class="card-input-container">
+                                <input
+                                        type="text"
+                                        id="card-number"
+                                        name="card-number"
+                                        placeholder="1234 5678 9012 3456"
+                                        maxlength="19"
+                                        required
+                                >
+                                <div class="card-icons">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </div>
                             </div>
-                        </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="card-expiry">Date d'expiration</label>
+                            <input
+                                    type="text"
+                                    id="card-expiry"
+                                    name="card-expiry"
+                                    placeholder="MM/AA"
+                                    maxlength="5"
+                                    required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="card-cvc">
+                                CVV
+                                <span class="tooltip">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span class="tooltip-text">Code à 3 chiffres au dos de votre carte</span>
+                                </span>
+                            </label>
+                            <input
+                                    type="text"
+                                    id="card-cvc"
+                                    name="card-cvc"
+                                    placeholder="123"
+                                    maxlength="4"
+                                    required
+                            >
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="cardholder-name">Nom du porteur</label>
+                            <input
+                                    type="text"
+                                    id="cardholder-name"
+                                    name="cardholder-name"
+                                    placeholder="Nom comme inscrit sur la carte"
+                                    required
+                            >
+                        </div>
                     </div>
-                </div>
 
-                <div id="card-details" style="margin-top:20px;">
-                    <label for="card_number">Numéro de carte bancaire :</label><br>
-                    <input type="text" id="card_number" name="card_number" maxlength="19" placeholder="1234 5678 9012 3456" inputmode="numeric"
-                    pattern="[0-9]{13,19}" required><br><br>
+                    <div class="security-info">
+                        <div class="security-badge">
+                            <i class="fas fa-lock"></i>
+                            <span>Paiement 100% sécurisé avec chiffrement SSL</span>
+                        </div>
+                    </div>
 
-                    <label for="expiry_date">Date d'expiration (MM/AA) :</label><br>
-                    <input type="text" id="expiry_date" name="expiry_date" maxlength="5" placeholder="MM/AA" pattern="(0[1-9]|1[0-2])\/[0-9]{2}" required><br><br>
+                    <div id="card-errors" class="error-message"></div>
 
-                    <label for="cvc">CVC :</label><br>
-                    <input type="text" id="cvc" name="cvc" maxlength="3" placeholder="123" inputmode="numeric"
-                    pattern="[0-9]{3}" required><br><br>
-                </div>
+                    <div class="action-buttons">
+                        <a href="index.php?controller=user&action=profile" class="button button-secondary">
+                            <i class="fas fa-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" id="submit-payment" class="button button-primary">
+                            <span id="button-text"><i class="fas fa-bolt"></i> Payer 1,00 €</span>
+                            <div id="spinner" class="spinner hidden"></div>
+                        </button>
+                    </div>
+                </form>
+            </div>
 
+            <!-- Formulaire PayPal (caché par défaut) -->
+            <div id="paypal-payment-form" class="payment-form" style="display: none;">
+                <form action="index.php?controller=boost&action=processBoost" method="post">
+                    <input type="hidden" name="item_type" value="<?php echo htmlspecialchars($itemType); ?>">
+                    <input type="hidden" name="item_id" value="<?php echo htmlspecialchars($itemId); ?>">
+                    <input type="hidden" name="payment_method" value="paypal">
 
-                <div class="action-buttons">
-                    <a href="index.php?controller=user&action=profile" class="button button-secondary">Annuler</a>
-                    <button type="submit" class="button button-primary">Payer et booster</button>
-                </div>
-            </form>
+                    <div class="paypal-info">
+                        <div class="paypal-logo">
+                            <i class="fab fa-paypal"></i>
+                        </div>
+                        <p>Vous serez redirigé vers PayPal pour finaliser votre paiement</p>
+                    </div>
+
+                    <div class="action-buttons">
+                        <a href="index.php?controller=user&action=profile" class="button button-secondary">
+                            <i class="fas fa-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" class="button button-paypal">
+                            <i class="fab fa-paypal"></i> Payer avec PayPal
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -130,6 +225,7 @@ $activeBoostCount = isset($activeBoostCount) ? $activeBoostCount : 0;
         </div>
     </div>
 </footer>
+
 
 
 </body>
