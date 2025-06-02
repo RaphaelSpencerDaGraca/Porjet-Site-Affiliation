@@ -7,14 +7,16 @@ class AffiliateCodeController {
     private $affiliateCodeModel;
     private $brandModel;
     private $userModel;
+    private $boostModel;
 
     /**
      * Constructeur - initialise les modèles
      */
-    public function __construct($affiliateCodeModel, $brandModel, $userModel) {
+    public function __construct($affiliateCodeModel, $brandModel, $userModel, $boostModel) {
         $this->affiliateCodeModel = $affiliateCodeModel;
         $this->brandModel = $brandModel;
         $this->userModel = $userModel;
+        $this->boostModel = $boostModel;
     }
 
     /**
@@ -242,6 +244,7 @@ class AffiliateCodeController {
         }
 
         if ($this->affiliateCodeModel->delete($id)) {
+            $this->boostModel->deleteByItem('code', $id);
             $_SESSION['success'] = "Code d'affiliation supprimé avec succès.";
         } else {
             $_SESSION['error'] = "Erreur lors de la suppression du code d'affiliation.";

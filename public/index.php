@@ -37,8 +37,8 @@ $boostModel = new BoostModel($pdo);
 $brandController = new BrandController($brandModel);
 $userController  = new UserController($userModel, $affiliateLinkModel, $affiliateCodeModel, $brandModel,$boostModel);
 $authController  = new AuthController($userModel);
-$affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel);
-$affiliateCodeController = new AffiliateCodeController($affiliateCodeModel, $brandModel, $userModel);
+$affiliateLinkController = new AffiliateLinkController($affiliateLinkModel, $brandModel, $userModel, $boostModel);
+$affiliateCodeController = new AffiliateCodeController($affiliateCodeModel, $brandModel, $userModel, $boostModel);
 $homeController = new HomeController();
 $boostController = new BoostController($boostModel, $affiliateLinkModel, $affiliateCodeModel, $userModel,$brandModel);
 
