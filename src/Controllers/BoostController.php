@@ -122,13 +122,17 @@ class BoostController {
             exit;
         }
 
-        // Préparer les données pour la vue
-        $userData = $this->userModel->findById($userId);
+        // Récupérer les données de l'utilisateur
+        $user = $this->userModel->findById($userId);
 
-        // Définir les variables directement dans la portée globale
-        global $itemType, $itemId, $itemName, $brandName, $activeBoostCount, $user;
-
-        $user = $userData;
+        // IMPORTANT : Définir les variables avant d'inclure la vue
+        // Ces variables seront disponibles dans boost.php
+        $itemType = $itemType;
+        $itemId = $itemId;
+        $itemName = $itemName;
+        $brandName = $brandName;
+        $activeBoostCount = $activeBoostCount;
+        $user = $user;
 
         // Inclure la vue du formulaire de boost
         include __DIR__ . '/../Views/boost.php';
@@ -138,35 +142,78 @@ class BoostController {
      * Crée un PaymentIntent Stripe
      */
     public function createPaymentIntent() {
-        $this->checkAuth();
+        // Empêcher toute sortie HTML
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
 
-        // Définir le header pour JSON
-        header('Content-Type: application/json');
+        // Forcer le header JSON immédiatement
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: no-cache, must-revalidate');
 
         try {
-            // Récupérer les données JSON
-            $input = json_decode(file_get_contents('php://input'), true);
-
-            $itemType = $input['item_type'] ?? '';
-            $itemId = $input['item_id'] ?? '';
-            $cardData = $input['card_data'] ?? null;
-
-            if (empty($itemType) || empty($itemId)) {
-                throw new Exception('Données manquantes');
+            // Vérifier que nous sommes bien dans une requête AJAX
+            if (!isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
+                !isset($_SERVER['HTTP_CONTENT_TYPE']) &&
+                strpos($_SERVER['HTTP_CONTENT_TYPE'] ?? '', 'application/json') === false) {
+                // Ce n'est pas une requête AJAX/JSON
+                http_response_code(400);
+                die(json_encode(['error' => 'Requête invalide - JSON attendu']));
             }
 
-            $userId = $_SESSION['user']['id'];
+            // Démarrer la session si nécessaire
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
 
-            // Vérifications de sécurité (similaires à processBoost)
-            if ($this->boostModel->countActiveByUserId($userId) >= 3) {
-                throw new Exception('Vous avez déjà 3 boosts actifs');
+            // Vérifier la session utilisateur
+            if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+                http_response_code(401);
+                die(json_encode(['error' => 'Session expirée. Veuillez vous reconnecter.']));
+            }
+
+            // Récupérer les données JSON
+            $rawInput = file_get_contents('php://input');
+            if (empty($rawInput)) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Aucune donnée reçue']));
+            }
+
+            $input = json_decode($rawInput, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Données JSON invalides']));
+            }
+
+            // Extraire et valider les données
+            $itemType = isset($input['item_type']) ? trim($input['item_type']) : '';
+            $itemId = isset($input['item_id']) ? intval($input['item_id']) : 0;
+
+            if (empty($itemType) || empty($itemId)) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Paramètres manquants']));
+            }
+
+            if (!in_array($itemType, ['link', 'code'])) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Type d\'élément invalide']));
+            }
+
+            $userId = intval($_SESSION['user']['id']);
+
+            // Vérifications métier
+            $activeCount = $this->boostModel->countActiveByUserId($userId);
+            if ($activeCount >= 3) {
+                http_response_code(400);
+                die(json_encode(['error' => 'Vous avez déjà 3 boosts actifs']));
             }
 
             if ($this->boostModel->isItemBoosted($itemType, $itemId)) {
-                throw new Exception('Cet élément est déjà boosté');
+                http_response_code(400);
+                die(json_encode(['error' => 'Cet élément est déjà boosté']));
             }
 
-            // Vérifier que l'élément appartient à l'utilisateur
+            // Vérifier l'élément
             $item = null;
             if ($itemType === 'link') {
                 $item = $this->affiliateLinkModel->findById($itemId);
@@ -175,107 +222,95 @@ class BoostController {
             }
 
             if (!$item || $item['user_id'] != $userId) {
-                throw new Exception('Élément non trouvé ou non autorisé');
+                http_response_code(403);
+                die(json_encode(['error' => 'Élément non trouvé ou non autorisé']));
             }
 
-            // Créer une session Stripe en base de données
-            $sessionId = uniqid('boost_', true);
-            $this->createStripeSession($sessionId, $userId, $itemType, $itemId, 1.00);
+            // Créer une session unique
+            $sessionId = 'boost_' . uniqid() . '_' . time();
 
-            // Préparer les données de paiement
-            $paymentData = [
-                'amount' => 100, // 1.00 EUR en centimes
-                'currency' => 'eur',
-                'metadata' => [
-                    'session_id' => $sessionId,
-                    'user_id' => $userId,
-                    'item_type' => $itemType,
-                    'item_id' => $itemId,
-                ],
-            ];
-
-            // Si nous avons des données de carte, créer une PaymentMethod d'abord
-            if ($cardData) {
-                // Créer une PaymentMethod avec les données de carte
-                $paymentMethod = \Stripe\PaymentMethod::create([
-                    'type' => 'card',
-                    'card' => [
-                        'number' => $cardData['number'],
-                        'exp_month' => $cardData['exp_month'],
-                        'exp_year' => $cardData['exp_year'],
-                        'cvc' => $cardData['cvc'],
-                    ],
-                    'billing_details' => [
-                        'name' => $cardData['name'],
-                    ],
-                ]);
-
-                // Créer le PaymentIntent avec la PaymentMethod
-                $paymentData['payment_method'] = $paymentMethod->id;
-                $paymentData['confirmation_method'] = 'manual';
-                $paymentData['confirm'] = true;
-                $paymentData['return_url'] = 'https://' . $_SERVER['HTTP_HOST'] . '/index.php?controller=boost&action=success';
+            // Enregistrer dans la base de données
+            global $pdo;
+            if (!$pdo) {
+                http_response_code(500);
+                die(json_encode(['error' => 'Erreur de connexion à la base de données']));
             }
+
+            $query = "INSERT INTO stripe_sessions (session_id, user_id, item_type, item_id, amount, status) 
+                 VALUES (:session_id, :user_id, :item_type, :item_id, :amount, 'pending')";
+            $stmt = $pdo->prepare($query);
+            $result = $stmt->execute([
+                ':session_id' => $sessionId,
+                ':user_id' => $userId,
+                ':item_type' => $itemType,
+                ':item_id' => $itemId,
+                ':amount' => 1.00
+            ]);
+
+            if (!$result) {
+                http_response_code(500);
+                die(json_encode(['error' => 'Erreur lors de l\'enregistrement de la session']));
+            }
+
+            // Configurer Stripe
+            require_once __DIR__ . '/../../vendor/autoload.php';
+            \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
             // Créer le PaymentIntent
-            $paymentIntent = PaymentIntent::create($paymentData);
+            try {
+                $paymentIntent = \Stripe\PaymentIntent::create([
+                    'amount' => 100, // 1.00 EUR en centimes
+                    'currency' => 'eur',
+                    'description' => 'Boost ' . $itemType . ' #' . $itemId,
+                    'metadata' => [
+                        'session_id' => $sessionId,
+                        'user_id' => strval($userId),
+                        'item_type' => $itemType,
+                        'item_id' => strval($itemId),
+                    ],
+                ]);
 
-            // Gérer la réponse selon le statut
-            if ($paymentIntent->status === 'succeeded') {
-                // Paiement immédiatement réussi
-                $this->processSuccessfulPayment(
-                    $this->getStripeSession($sessionId),
-                    $paymentIntent->id
-                );
-
+                // Succès - retourner le JSON
                 echo json_encode([
                     'success' => true,
-                    'redirect_url' => 'index.php?controller=user&action=profile'
-                ]);
-            } elseif ($paymentIntent->status === 'requires_action') {
-                // Nécessite une action supplémentaire (3D Secure)
-                echo json_encode([
-                    'requires_action' => true,
-                    'client_secret' => $paymentIntent->client_secret
-                ]);
-            } else {
-                // Autres cas
-                echo json_encode([
                     'client_secret' => $paymentIntent->client_secret,
+                    'id' => $paymentIntent->id,
                     'session_id' => $sessionId
                 ]);
+                exit;
+
+            } catch (\Stripe\Exception\ApiErrorException $e) {
+                http_response_code(500);
+                error_log('Erreur Stripe: ' . $e->getMessage());
+                die(json_encode(['error' => 'Erreur du service de paiement: ' . $e->getMessage()]));
             }
 
-        } catch (\Stripe\Exception\CardException $e) {
-            // Erreur de carte spécifique
-            echo json_encode(['error' => $this->getCardErrorMessage($e->getError()->code)]);
-        } catch (\Stripe\Exception\ApiErrorException $e) {
-            // Autres erreurs Stripe
-            echo json_encode(['error' => 'Erreur de paiement: ' . $e->getMessage()]);
         } catch (Exception $e) {
-            echo json_encode(['error' => $e->getMessage()]);
+            http_response_code(500);
+            error_log('Erreur createPaymentIntent: ' . $e->getMessage());
+            die(json_encode(['error' => 'Erreur serveur: ' . $e->getMessage()]));
         }
-        exit;
     }
 
     /**
-     * Traduit les codes d'erreur Stripe en messages français
+     * Retourne un message d'erreur en français pour les codes d'erreur Stripe
      */
     private function getCardErrorMessage($errorCode) {
         $messages = [
-            'card_declined' => 'Votre carte a été refusée.',
-            'expired_card' => 'Votre carte a expiré.',
-            'incorrect_cvc' => 'Le code de sécurité de votre carte est incorrect.',
-            'incorrect_number' => 'Le numéro de votre carte est incorrect.',
-            'insufficient_funds' => 'Votre carte ne dispose pas de fonds suffisants.',
-            'invalid_cvc' => 'Le code de sécurité de votre carte est invalide.',
-            'invalid_expiry_month' => 'Le mois d\'expiration de votre carte est invalide.',
-            'invalid_expiry_year' => 'L\'année d\'expiration de votre carte est invalide.',
-            'invalid_number' => 'Le numéro de votre carte est invalide.',
-            'processing_error' => 'Une erreur s\'est produite lors du traitement de votre carte.',
+            'card_declined' => 'Votre carte a été refusée',
+            'incorrect_cvc' => 'Le code de sécurité (CVV) est incorrect',
+            'expired_card' => 'Votre carte a expiré',
+            'insufficient_funds' => 'Fonds insuffisants sur votre carte',
+            'incorrect_number' => 'Le numéro de carte est incorrect',
+            'invalid_cvc' => 'Le code de sécurité (CVV) est invalide',
+            'invalid_expiry_month' => 'Le mois d\'expiration est invalide',
+            'invalid_expiry_year' => 'L\'année d\'expiration est invalide',
+            'invalid_number' => 'Le numéro de carte est invalide',
+            'processing_error' => 'Une erreur s\'est produite lors du traitement',
+            'card_declined_generic' => 'Votre carte a été refusée pour une raison inconnue',
         ];
 
-        return $messages[$errorCode] ?? 'Erreur de carte bancaire.';
+        return isset($messages[$errorCode]) ? $messages[$errorCode] : 'Erreur de paiement. Veuillez vérifier vos informations.';
     }
 
     /**
@@ -313,30 +348,126 @@ class BoostController {
         }
 
         try {
+            // Configurer Stripe
+            \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
             // Récupérer le PaymentIntent depuis Stripe
-            $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+            $paymentIntent = \Stripe\PaymentIntent::retrieve($paymentIntentId);
 
             if ($paymentIntent->status === 'succeeded') {
+                // Récupérer les métadonnées
                 $sessionId = $paymentIntent->metadata->session_id;
                 $userId = $_SESSION['user']['id'];
+                $itemType = $paymentIntent->metadata->item_type;
+                $itemId = $paymentIntent->metadata->item_id;
 
                 // Vérifier si ce paiement a déjà été traité
-                $session = $this->getStripeSession($sessionId);
+                global $pdo;
 
-                if ($session && $session['status'] === 'pending' && $session['user_id'] == $userId) {
-                    // Traiter le boost
-                    $this->processSuccessfulPayment($session, $paymentIntentId);
-                    $_SESSION['success'] = "Votre élément a été boosté avec succès pour 7 jours !";
+                // Vérifier d'abord si le boost existe déjà
+                $query = "SELECT id FROM boosts WHERE payment_id = :payment_id";
+                $stmt = $pdo->prepare($query);
+                $stmt->bindParam(':payment_id', $paymentIntentId);
+                $stmt->execute();
+
+                if ($stmt->fetch()) {
+                    // Déjà traité
+                    $_SESSION['success'] = "Votre boost est déjà actif !";
+                    header('Location: index.php?controller=user&action=profile');
+                    exit;
+                }
+
+                // Récupérer la session Stripe
+                $query = "SELECT * FROM stripe_sessions WHERE session_id = :session_id AND user_id = :user_id";
+                $stmt = $pdo->prepare($query);
+                $stmt->bindParam(':session_id', $sessionId);
+                $stmt->bindParam(':user_id', $userId);
+                $stmt->execute();
+                $session = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($session && $session['status'] === 'pending') {
+                    // Commencer une transaction
+                    $pdo->beginTransaction();
+
+                    try {
+                        // 1. Créer le boost
+                        $startDate = date('Y-m-d H:i:s');
+                        $endDate = date('Y-m-d H:i:s', strtotime('+7 days'));
+
+                        $boostData = [
+                            'user_id' => $userId,
+                            'item_type' => $itemType,
+                            'item_id' => $itemId,
+                            'start_date' => $startDate,
+                            'end_date' => $endDate,
+                            'status' => 'active',
+                            'amount' => 1.00,
+                            'payment_id' => $paymentIntentId
+                        ];
+
+                        $boostId = $this->boostModel->create($boostData);
+
+                        if (!$boostId) {
+                            throw new Exception("Erreur lors de la création du boost");
+                        }
+
+                        // 2. Créer la transaction
+                        $query = "INSERT INTO transactions (user_id, amount, type, status, payment_method, reference_id, item_type, item_id, boost_id) 
+                             VALUES (:user_id, :amount, :type, :status, :payment_method, :reference_id, :item_type, :item_id, :boost_id)";
+                        $stmt = $pdo->prepare($query);
+                        $stmt->execute([
+                            ':user_id' => $userId,
+                            ':amount' => 1.00,
+                            ':type' => 'boost',
+                            ':status' => 'completed',
+                            ':payment_method' => 'card',
+                            ':reference_id' => $paymentIntentId,
+                            ':item_type' => $itemType,
+                            ':item_id' => $itemId,
+                            ':boost_id' => $boostId
+                        ]);
+
+                        // 3. Mettre à jour l'élément boosté
+                        if ($itemType === 'link') {
+                            $query = "UPDATE affiliate_links SET is_boosted = 1, boost_end_date = :end_date WHERE id = :id";
+                        } else {
+                            $query = "UPDATE affiliate_codes SET is_boosted = 1, boost_end_date = :end_date WHERE id = :id";
+                        }
+                        $stmt = $pdo->prepare($query);
+                        $stmt->bindParam(':end_date', $endDate);
+                        $stmt->bindParam(':id', $itemId);
+                        $stmt->execute();
+
+                        // 4. Mettre à jour la session Stripe
+                        $query = "UPDATE stripe_sessions SET status = 'completed', updated_at = NOW() WHERE session_id = :session_id";
+                        $stmt = $pdo->prepare($query);
+                        $stmt->bindParam(':session_id', $sessionId);
+                        $stmt->execute();
+
+                        // Valider la transaction
+                        $pdo->commit();
+
+                        $_SESSION['success'] = "Votre élément a été boosté avec succès pour 7 jours !";
+
+                    } catch (Exception $e) {
+                        // Annuler la transaction en cas d'erreur
+                        $pdo->rollBack();
+                        throw $e;
+                    }
+
                 } else {
-                    $_SESSION['error'] = "Ce paiement a déjà été traité ou est invalide.";
+                    $_SESSION['error'] = "Session de paiement invalide ou déjà traitée.";
                 }
             } else {
-                $_SESSION['error'] = "Le paiement n'a pas été complété.";
+                $_SESSION['error'] = "Le paiement n'a pas été complété. Statut: " . $paymentIntent->status;
             }
 
-        } catch (ApiErrorException $e) {
-            $_SESSION['error'] = "Erreur lors de la vérification du paiement.";
-            error_log("Erreur Stripe: " . $e->getMessage());
+        } catch (\Stripe\Exception\ApiErrorException $e) {
+            $_SESSION['error'] = "Erreur lors de la vérification du paiement: " . $e->getMessage();
+            error_log("Erreur Stripe dans success(): " . $e->getMessage());
+        } catch (Exception $e) {
+            $_SESSION['error'] = "Erreur lors du traitement: " . $e->getMessage();
+            error_log("Erreur dans success(): " . $e->getMessage());
         }
 
         header('Location: index.php?controller=user&action=profile');

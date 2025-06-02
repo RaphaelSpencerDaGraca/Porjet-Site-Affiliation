@@ -31,4 +31,11 @@ abstract class BaseModel {
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Retourne l'instance PDO
+     */
+    public function getDb() {
+        return $this->db;
+    }
 }

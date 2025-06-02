@@ -59,6 +59,7 @@ switch ($controller) {
             echo "Action « {$action} » introuvable pour le contrôleur Home.";
         }
         break;
+
     case 'brand':
         // On garde l'instance $brandController
         if (method_exists($brandController, $action)) {
@@ -112,22 +113,6 @@ switch ($controller) {
             echo "Action « {$action} » introuvable pour le contrôleur AffiliateLink.";
         }
         break;
-    // juste avant le default :
-    case 'bill':
-        if ($action === 'generate') {
-            require_once __DIR__ . '/../src/Models/BillModel.php';
-            require_once __DIR__ . '/../src/Controllers/BillController.php';
-    
-            $billModel      = new BillModel($pdo);
-            $billController = new BillController($billModel);
-            $billController->generate();
-        } else {
-            http_response_code(404);
-            echo "Action « {$action} » introuvable pour BillController.";
-        }
-        break;
-    
-
 
     case 'affiliatecode':
         if (method_exists($affiliateCodeController, $action)) {
@@ -148,33 +133,46 @@ switch ($controller) {
             echo "Action « {$action} » introuvable pour le contrôleur AffiliateCode.";
         }
         break;
-    default:
-        // Contrôleur inconnu → 404
-        http_response_code(404);
-        echo "Contrôleur « {$controller} » introuvable.";
-        break;
 
+    case 'bill':
+        if ($action === 'generate') {
+            require_once __DIR__ . '/../src/Models/BillModel.php';
+            require_once __DIR__ . '/../src/Controllers/BillController.php';
+
+            $billModel      = new BillModel($pdo);
+            $billController = new BillController($billModel);
+            $billController->generate();
+        } else {
+            http_response_code(404);
+            echo "Action « {$action} » introuvable pour BillController.";
+        }
+        break;
 
     case 'boost':
         if (method_exists($boostController, $action)) {
-            // Vérifier si des paramètres supplémentaires sont nécessaires
-            if ($action === 'showBoostForm') {
-                $itemType = isset($_GET['item_type']) ? $_GET['item_type'] : '';
-                $itemId = isset($_GET['item_id']) ? $_GET['item_id'] : '';
-                $boostController->showBoostForm($itemType, $itemId);
-            } else if ($action === 'cancel') {
+            // Actions qui nécessitent des paramètres spéciaux
+            if ($action === 'cancel') {
                 $id = isset($_GET['id']) ? $_GET['id'] : null;
                 if ($id === null) {
-                    echo "Erreur: ID manquant pour l'action $action";
+                    $_SESSION['error'] = "ID manquant pour annuler le boost";
+                    header('Location: index.php?controller=boost&action=history');
                     exit;
                 }
                 $boostController->cancel($id);
             } else {
-                $boostController->$action();
+                // Toutes les autres actions (showBoostForm, createPaymentIntent, success, history, etc.)
+                $boostController->{$action}();
             }
         } else {
             http_response_code(404);
             echo "Action « {$action} » introuvable pour le contrôleur Boost.";
         }
         break;
+
+    default:
+        // Contrôleur inconnu → 404
+        http_response_code(404);
+        echo "Contrôleur « {$controller} » introuvable.";
+        break;
 }
+?>

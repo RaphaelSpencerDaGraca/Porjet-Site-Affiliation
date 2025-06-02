@@ -825,3 +825,43 @@ footer {
         background-color: rgba(255, 255, 255, 0.95);
     }
 }
+
+/* Conteneur Stripe Element */
+#card-element {
+    background-color: white;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: var(--transition);
+    min-height: 50px;
+}
+
+#card-element.StripeElement--focus {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+}
+
+#card-element.StripeElement--invalid {
+    border-color: var(--danger-color);
+}
+
+#card-element.StripeElement--complete {
+    border-color: var(--success-color);
+}
+
+/* Erreurs Stripe */
+#card-errors {
+    background-color: #fdecea;
+    color: #d93025;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    border-left: 4px solid #ea4335;
+    display: none;
+    animation: slideIn 0.3s ease;
+}
+
+#card-errors:not(:empty) {
+    display: block;
+}
