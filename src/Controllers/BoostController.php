@@ -245,7 +245,7 @@ class BoostController {
                     'session_id' => $sessionId
                 ]);
             }
-
+            
         } catch (\Stripe\Exception\CardException $e) {
             // Erreur de carte spécifique
             echo json_encode(['error' => $this->getCardErrorMessage($e->getError()->code)]);
