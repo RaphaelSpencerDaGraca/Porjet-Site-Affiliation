@@ -11,8 +11,8 @@ define('STRIPE_MODE', 'test'); // 'test' ou 'live'
 
 if (STRIPE_MODE === 'test') {
     // Clés de test
-    define('STRIPE_PUBLISHABLE_KEY', 'pk_test_votre_cle_publique_test');
-    define('STRIPE_SECRET_KEY', 'sk_test_votre_cle_secrete_test');
+    define('STRIPE_PUBLISHABLE_KEY', 'pk_test_51RQrRFPpmzvLOWW7tDSberF5yFVwheeg09rKaNTxZhU4fUp2gZ5WuZ7fBkiCmQfG4uHfLvA6XjiowJdriw46rZ2400CL90suUk');
+    define('STRIPE_SECRET_KEY', 'sk_test_51RQrRFPpmzvLOWW7RZJ6qcIEvhzW00kpl61pUOhPXtL1jQy4G1yzqdSjWqc0hBWMIOFAZnuI9fX0klm8wh8jbOd400K5Cz0G1B');
 } else {
     // Clés de production
     define('STRIPE_PUBLISHABLE_KEY', 'pk_live_votre_cle_publique_live');
