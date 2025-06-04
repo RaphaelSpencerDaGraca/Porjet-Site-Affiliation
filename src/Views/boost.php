@@ -1,5 +1,4 @@
 <?php
-// Récupérer les variables depuis le contrôleur
 $itemType = isset($itemType) ? $itemType : '';
 $itemId = isset($itemId) ? $itemId : '';
 $itemName = isset($itemName) ? $itemName : '';
@@ -15,8 +14,8 @@ $user = isset($user) ? $user : $_SESSION['user'];
     <title>Booster votre élément - Affiliagram</title>
     <link rel="stylesheet" href="../css/boost.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="../js/boost.js"></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <script src="../js/boost.js"></script>
 </head>
 <body>
 <header>
@@ -33,7 +32,7 @@ $user = isset($user) ? $user : $_SESSION['user'];
 </header>
 
 <div class="container">
-    <!-- Données pour JavaScript -->
+    <!-- Données pour JavaScript (configuration sécurisée) -->
     <div id="boost-data"
          data-stripe-key="<?php echo htmlspecialchars(STRIPE_PUBLISHABLE_KEY); ?>"
          data-item-type="<?php echo htmlspecialchars($itemType); ?>"
@@ -92,7 +91,7 @@ $user = isset($user) ? $user : $_SESSION['user'];
                     <div class="form-group">
                         <label for="card-element">Carte bancaire</label>
                         <div id="card-element" class="stripe-element">
-                            <!-- Stripe Elements sera inséré ici -->
+                            <!-- Stripe Elements sera inséré ici par le JavaScript -->
                         </div>
                         <div id="card-errors" class="error-message" role="alert"></div>
                     </div>
@@ -109,8 +108,12 @@ $user = isset($user) ? $user : $_SESSION['user'];
                             <i class="fas fa-arrow-left"></i> Annuler
                         </a>
                         <button type="submit" id="submit-payment" class="button button-primary">
-                            <span id="button-text"><i class="fas fa-bolt"></i> Payer 1,00 €</span>
-                            <div id="spinner" class="spinner hidden"></div>
+                            <span id="button-text">
+                                <i class="fas fa-bolt"></i> Payer 1,00 €
+                            </span>
+                            <div id="spinner" class="spinner hidden">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
                         </button>
                     </div>
                 </form>
@@ -131,124 +134,6 @@ $user = isset($user) ? $user : $_SESSION['user'];
         </div>
     </div>
 </footer>
-
-<script>
-    // Configuration Stripe avec Elements (méthode sécurisée)
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('Initialisation du paiement avec Stripe Elements...');
-
-        // Récupérer la clé publique Stripe
-        const boostData = document.getElementById('boost-data');
-        const stripeKey = boostData.getAttribute('data-stripe-key');
-        const itemType = boostData.getAttribute('data-item-type');
-        const itemId = boostData.getAttribute('data-item-id');
-
-        if (!stripeKey) {
-            console.error('Clé Stripe manquante');
-            return;
-        }
-
-        // Initialiser Stripe
-        const stripe = Stripe(stripeKey);
-        const elements = stripe.elements();
-
-        // Créer l'élément de carte
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    fontSize: '16px',
-                    color: '#32325d',
-                    fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-                    fontSmoothing: 'antialiased',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#fa755a',
-                    iconColor: '#fa755a'
-                }
-            }
-        });
-
-        // Monter l'élément dans le DOM
-        cardElement.mount('#card-element');
-
-        // Gérer les erreurs en temps réel
-        cardElement.on('change', function(event) {
-            const displayError = document.getElementById('card-errors');
-            if (event.error) {
-                displayError.textContent = event.error.message;
-            } else {
-                displayError.textContent = '';
-            }
-        });
-
-        // Gérer la soumission du formulaire
-        const form = document.getElementById('payment-form');
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const submitButton = document.getElementById('submit-payment');
-            const buttonText = document.getElementById('button-text');
-            const spinner = document.getElementById('spinner');
-            const errorDiv = document.getElementById('card-errors');
-
-            // Désactiver le bouton
-            submitButton.disabled = true;
-            buttonText.style.display = 'none';
-            spinner.classList.remove('hidden');
-
-            try {
-                // Créer d'abord un PaymentIntent côté serveur
-                console.log('Création du PaymentIntent...');
-                const response = await fetch('index.php?controller=boost&action=createPaymentIntent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        item_type: itemType,
-                        item_id: itemId
-                    })
-                });
-
-                const data = await response.json();
-                console.log('Réponse serveur:', data);
-
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                // Confirmer le paiement avec Stripe Elements
-                console.log('Confirmation du paiement...');
-                const result = await stripe.confirmCardPayment(data.client_secret, {
-                    payment_method: {
-                        card: cardElement
-                    }
-                });
-
-                if (result.error) {
-                    // Afficher l'erreur
-                    errorDiv.textContent = result.error.message;
-                } else {
-                    // Paiement réussi
-                    console.log('Paiement réussi:', result.paymentIntent);
-                    window.location.href = 'index.php?controller=boost&action=success&payment_intent=' + result.paymentIntent.id;
-                }
-
-            } catch (error) {
-                console.error('Erreur:', error);
-                errorDiv.textContent = error.message || 'Une erreur est survenue';
-            } finally {
-                // Réactiver le bouton
-                submitButton.disabled = false;
-                buttonText.style.display = 'inline-flex';
-                spinner.classList.add('hidden');
-            }
-        });
-    });
-</script>
 
 </body>
 </html>
