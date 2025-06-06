@@ -260,12 +260,26 @@ function showSuccessMessage() {
     `;
     successDiv.innerHTML = `
         <i class="fas fa-check-circle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-        ✅ Paiement réussi !<br>
-        <small style="font-weight: normal;">Redirection en cours...</small>
+        ✅ Paiement réussi ! Veuillez attendre que la facture se télécharge automatiquement sur votre appareil.<br>
+        <button id="back-to-profile" style="
+            background-color: #155724;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        ">
+            Retour au profil
+        </button>
     `;
 
     form.parentElement.insertBefore(successDiv, form);
     form.style.display = 'none';
+
+    document.getElementById('back-to-profile').addEventListener('click', function() {
+        window.location.href = 'index.php?controller=user&action=profile';
+    });
 }
 
 /**

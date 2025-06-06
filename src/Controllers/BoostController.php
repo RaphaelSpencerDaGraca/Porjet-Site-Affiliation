@@ -471,7 +471,9 @@ class BoostController {
             error_log("Erreur dans success(): " . $e->getMessage());
         }
 
-        header('Location: index.php?controller=user&action=profile');
+        // À la fin de success(), juste après avoir validé la transaction et mis $_SESSION['success'] :
+        header('Location: index.php?controller=bill&action=generate');
+
         exit;
     }
 
